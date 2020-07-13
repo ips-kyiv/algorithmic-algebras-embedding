@@ -5,14 +5,14 @@ trait Interpretation {
 
   trait DataItemType {
      type ScalaType;
-     def dataType: DataType;
+     def dataSort: DataSort;
   }
 
   type DataItem <: DataItemType
 
-  def extract[T](item: DataItem, rep: DataTypeRep[T]): Option[T]
+  def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T]
 
-  def constant[T](value: T, rep: DataTypeRep[T]): DataItem 
+  def constant[T](value: T, rep: DataSortRep[T]): DataItem 
 
   //def apply(x:Signature, args: Seq[DataItem]): DataItem
 
@@ -21,24 +21,26 @@ trait Interpretation {
 
 class DirectInterpretation extends Interpretation {
 
-  case class ConstantDataItem[T](override val dataType: DataType, value: T) extends DataItemType:
+  case class ConstantDataItem[T](override val dataSort: DataSort, value: T) extends DataItemType:
     type ScalaType = T
 
   override type DataItem = ConstantDataItem[?]
 
-  override def extract[T](item: DataItem, rep: DataTypeRep[T]): Option[T] =
+  override def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T] =
     rep match
-      case BasicDataType(name) =>
+      case BasicDataSort(name) =>
               extractPrimitive[T](name, item) 
-      case _ => ???
+      case _ => 
+              // TODO: build deriving typeclasses for scala
+              ???
 
-  override def constant[T](value: T, rep: DataTypeRep[T]): DataItem =
-    ConstantDataItem[T](rep.dataType, value) 
+  override def constant[T](value: T, rep: DataSortRep[T]): DataItem =
+    ConstantDataItem[T](rep.dataSort, value) 
   
 
   def extractPrimitive[T](name: String, item: ConstantDataItem[?]): Option[T] =
-     item.dataType match
-       case BasicDataType(itemName) if itemName == name =>
+     item.dataSort match
+       case BasicDataSort(itemName) if itemName == name =>
            Some(item.value).asInstanceOf[Option[T]]
        case _ =>
            None
