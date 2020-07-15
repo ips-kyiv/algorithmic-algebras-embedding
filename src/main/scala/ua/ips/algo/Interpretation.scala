@@ -4,7 +4,6 @@ package ua.ips.algo
 trait Interpretation {
 
   trait DataItemType {
-     type ScalaType;
      def dataSort: DataSort;
   }
 
@@ -14,22 +13,33 @@ trait Interpretation {
 
   def constant[T](value: T, rep: DataSortRep[T]): DataItem 
 
-  //def apply(x:Signature, args: Seq[DataItem]): DataItem
+  // interpert signature or throw exception is one is not implemented
+  def apply(signature:DataSortSignature, args: Seq[DataItem]): DataItem
 
 }
 
 
-class DirectInterpretation extends Interpretation {
+trait FreeInterpretation extends Interpretation {
 
-  case class ConstantDataItem[T](override val dataSort: DataSort, value: T) extends DataItemType:
-    type ScalaType = T
+  sealed trait FreeDataItem extends DataItemType
 
-  override type DataItem = ConstantDataItem[?]
+  case class ConstantDataItem[T](override val dataSort: DataSort, value: T) 
+                                                                  extends FreeDataItem
+
+  case class UninterpretedFunctionDataItem(signature:DataSortSignature, 
+                                           args: Seq[DataItem]) extends FreeDataItem:
+    def  dataSort = signature.out
+                       
+
+  override type DataItem = FreeDataItem
 
   override def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T] =
     rep match
       case BasicDataSort(name) =>
-              extractPrimitive[T](name, item) 
+              item match
+                case constant: ConstantDataItem[_] =>
+                            extractPrimitive[T](name, constant) 
+                case f: UninterpretedFunctionDataItem => None
       case _ => 
               // TODO: build deriving typeclasses for scala
               ???
@@ -37,6 +47,11 @@ class DirectInterpretation extends Interpretation {
   override def constant[T](value: T, rep: DataSortRep[T]): DataItem =
     ConstantDataItem[T](rep.dataSort, value) 
   
+  override def apply(signature:DataSortSignature, args: Seq[DataItem]): DataItem =
+    //TODO: check typing
+    // TODO: add term rewriting in non-free
+    UninterpretedFunctionDataItem(signature, args)
+
 
   def extractPrimitive[T](name: String, item: ConstantDataItem[?]): Option[T] =
      item.dataSort match
@@ -47,7 +62,7 @@ class DirectInterpretation extends Interpretation {
 
 }
 
-object DirectInterpretation extends DirectInterpretation
+object FreeInterpretation extends FreeInterpretation
 
 // TODO: Staged.
 
