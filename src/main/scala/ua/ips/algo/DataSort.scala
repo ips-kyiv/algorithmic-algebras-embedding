@@ -25,9 +25,10 @@ trait BasicDataSortRep[T] extends DataSortRep[T] {
 
 }
 
+
 object IntBasicRep extends BasicDataSortRep[Int] {
 
-   def name: String = "int"
+   val name: String = "int"
 
 }
 
@@ -35,7 +36,7 @@ given DataSortRep[Int] = IntBasicRep
 
 object BooleanBasicRep extends BasicDataSortRep[Boolean] {
 
-   def name: String = "boolean"
+   val name: String = "boolean"
 
 }
 
