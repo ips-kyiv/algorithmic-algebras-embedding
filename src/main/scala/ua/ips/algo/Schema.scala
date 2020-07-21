@@ -17,3 +17,10 @@ case class LoopSchema(cond: Condition, body: Schema) extends Schema
 case class AssertSchema(cond: Condition) extends Schema
 
 
+object Schema {
+
+  def build() = ???
+
+}
+
+
