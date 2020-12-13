@@ -60,6 +60,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
   def processTerm(body: Term, base: Expr[SchemaBase]): WithBase[Schema] =
     body match
       case Block(statements,last) => processBlock(statements, last, base)
+      case If(cond,ifTrue,ifFalse) => processIf(cond, ifTrue, ifFalse, base)
       case id@Ident(name) => processIdent(id, base)
       case app@Apply(obj, args) => processApply(app, base)
       case lt@Literal(constant) => processLiteral(lt, base)
@@ -75,6 +76,43 @@ class SchemaEmbedding(using val qctx: Quotes) {
          val snd = processBlock(tail, last, frs.base)
          val expr =  '{ SequentialSchema( ${frs.value},  ${snd.value} ) }
          WithBase(base, expr)
+
+  private def processIf(cond:Term, ifTrue: Term, ifFalse:Term, base: Expr[SchemaBase]): WithBase[Schema] = 
+    val predicate = processPredicate(cond, base)
+    val ifTrueSchema = processTerm(ifTrue, predicate.base)
+    val ifFalseSchema = processTerm(ifFalse, ifTrueSchema.base)
+    val r = '{
+       ConditionalSchema(${predicate.value}, ${ifTrueSchema.value}, ${ifFalseSchema.value})
+    }
+    WithBase(ifFalseSchema.base, r)
+ 
+  private def processPredicate(cond: Term, base: Expr[SchemaBase]): WithBase[Condition] =
+    cond match
+      case Apply(Select(obj,"&&"),List(arg)) =>
+              val frs = processPredicate(obj, base)
+              val snd = processPredicate(arg, frs.base)
+              val r = '{ AndCondition( ${frs.value}, ${snd.value}) }
+              WithBase(snd.base,r)
+      case Apply(Select(obj,"||"),List(arg)) =>
+              val frs = processPredicate(obj, base)
+              val snd = processPredicate(arg, frs.base)
+              val r = '{ OrCondition( ${frs.value}, ${snd.value}) }
+              WithBase(snd.base,r)
+      case Apply(Select(obj,"!"),List()) =>
+              val frs = processPredicate(obj, base)
+              val r = '{ NotCondition( ${frs.value}) }
+              WithBase(frs.base,r)
+      case _ => 
+              val v = processTerm(cond, base)
+              val r = '{
+                 ${v.value} match
+                     case OutputSchema(e) =>
+                             BaseCondition(e)
+                     case _ => 
+                             throw SchemaBuildException("Expected data expression")
+              }
+              WithBase(v.base,r)
+              
 
   private def processApply(applyTerm: Apply, base: Expr[SchemaBase]): WithBase[Schema] =
     applyTerm match

@@ -18,19 +18,8 @@ sealed trait Condition:
   def lift(using Quotes): Expr[Condition]
 
 
-object Condition:
-  def base(signature: DataSortSignature, args: Seq[Name]): Condition =
-     signature.out match
-        case BasicDataSort(name) if name == BooleanBasicRep.name =>
-          if args.size != signature.in.size then
-              throw new SchemaBuildException("args mismatch")
-          BaseCondition(signature, args)
-        case _ =>  
-          throw new SchemaBuildException("non boolean signature")
-
-
-case class BaseCondition(signature: DataSortSignature, args:Seq[Name]) extends Condition:
-  def lift(using Quotes): Expr[Condition] = '{BaseCondition(${signature.lift}, ${Expr.ofSeq(args.map(x=>Expr(x)))}) }
+case class BaseCondition(expr: DataExpression) extends Condition:
+  def lift(using Quotes): Expr[Condition] = '{ BaseCondition(${expr.lift}) }
 
 case class AndCondition(x:Condition, y:Condition) extends Condition:
   def lift(using Quotes): Expr[Condition] = '{AndCondition(${x.lift}, ${y.lift}) }

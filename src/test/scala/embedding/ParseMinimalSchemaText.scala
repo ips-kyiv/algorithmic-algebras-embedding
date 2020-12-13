@@ -19,5 +19,24 @@ class ParseMinimalSchemaTest extends FunSuite {
 
   }
 
+  test("parseCondition") {
+
+    val schema = Schema.build{
+      (x:Int) => if (x > 0) 1 else 0
+    }
+    println(schema)
+    schema match
+      case SequentialSchema(
+              InputSchema(variable,sort),
+              ConditionalSchema(c,x,y)
+           ) =>
+         assert(true)
+      case _ =>
+         assert(false)
+
+
+  }
+
+
 
 }
