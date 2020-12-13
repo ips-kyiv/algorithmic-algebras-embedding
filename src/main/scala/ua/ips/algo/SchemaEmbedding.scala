@@ -61,9 +61,11 @@ class SchemaEmbedding(using val qctx: Quotes) {
     body match
       case Block(statements,last) => processBlock(statements, last, base)
       case If(cond,ifTrue,ifFalse) => processIf(cond, ifTrue, ifFalse, base)
+      case While(cond,body) => processWhile(cond, body, base)
       case id@Ident(name) => processIdent(id, base)
       case app@Apply(obj, args) => processApply(app, base)
       case lt@Literal(constant) => processLiteral(lt, base)
+      case Assign(lhs,rhs) => processAssign(lhs, rhs, base)
       case _ => 
            throw SchemaCompileException(s"term is not supported yet ${body}", body.asExpr)
 
@@ -86,6 +88,27 @@ class SchemaEmbedding(using val qctx: Quotes) {
     }
     WithBase(ifFalseSchema.base, r)
  
+  private def processWhile(cond:Term, body:Term, base: Expr[SchemaBase]): WithBase[Schema] = 
+    val predicate = processPredicate(cond, base)
+    val bodySchema = processTerm(body,predicate.base)
+    val r = '{
+        LoopSchema(${predicate.value}, ${bodySchema.value})
+    }
+    WithBase(bodySchema.base, r)
+
+  private def processAssign(lhs:Term, rhs:Term, base: Expr[SchemaBase] ): WithBase[Schema] =
+    lhs match
+      case Ident(name) =>
+         val rhsSchema = processTerm(rhs, base)
+         val r = '{
+            AssignSchema(${Expr(name)}, ${rhsSchema.value}.asDataExpression)
+         }
+         WithBase(rhsSchema.base, r)
+      case _ =>
+            // TODO: implement array access.
+            // TODO:  think how to represent (?)
+         throw SchemaCompileException("ident in left part is expected", lhs.asExpr)
+
   private def processPredicate(cond: Term, base: Expr[SchemaBase]): WithBase[Condition] =
     cond match
       case Apply(Select(obj,"&&"),List(arg)) =>
@@ -160,7 +183,30 @@ class SchemaEmbedding(using val qctx: Quotes) {
       case _ =>
          throw SchemaCompileException("construction is not supported", applyTerm.asExpr)
     
-  private def processStatement(st: Statement, base: Expr[SchemaBase]): WithBase[Schema] = ???
+
+  private def processStatement(st: Statement, base: Expr[SchemaBase]): WithBase[Schema] = 
+        st match
+           case Import(x) => ???
+           //case Export(x) => ???
+           case d: Definition =>
+              d match
+                 case ValDef(name,typeTree,optRhs) =>
+                   optRhs match
+                     case Some(rhs) =>
+                        val rhsSchema = processTerm(rhs, base)
+                        val rhsExpr = '{
+                               ${rhsSchema.value} match
+                                  case OutputSchema(expr) => expr 
+                                  case _ => throw SchemaBuildException("AAA")
+                        }
+                        // TODO: add lisst of names and track ValDef to Name                  
+                        val r = '{ AssignSchema(${Expr(name)}, ${rhsExpr}) }
+                        WithBase(rhsSchema.base, r)
+                     case None =>
+                        throw SchemaCompileException(s"Var should have init value ${d}", d.asExpr )
+                 case _ => 
+                   throw SchemaCompileException(s"definition other then ValDef are not supported ${d}", d.asExpr)
+           case t: Term => processTerm(t, base)
 
   private def processIdent(id: Ident, base: Expr[SchemaBase]): WithBase[Schema] =
         val sort = findDataSort(id.tpe.widen, id.asExpr)

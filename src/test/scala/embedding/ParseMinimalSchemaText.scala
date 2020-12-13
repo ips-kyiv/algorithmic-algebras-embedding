@@ -34,6 +34,18 @@ class ParseMinimalSchemaTest extends FunSuite {
       case _ =>
          assert(false)
 
+  }
+
+  test("parseLoop") {
+
+    val schema = Schema.build{
+      (x:Int) =>
+          var y = x
+          while(y > 0) {
+            y = y - 1
+          }
+    }
+
 
   }
 
