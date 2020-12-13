@@ -6,12 +6,23 @@ case class DataSortSignature(
              name: String,   // TODO: think about module system
              in: Seq[(String,DataSort)],
              out: DataSort
-           )
+           ):
 
-trait DataSortSignatureRep[T] {
+  def lift(using Quotes):Expr[DataSortSignature] =
+       '{DataSortSignature(${Expr(name)}, 
+               ${Expr.ofSeq(in.map(x => 
+                   Expr.ofTupleFromSeq(Seq(Expr(x._1),x._2.lift)).asExprOf[(String,DataSort)]
+                 ))},
+               ${out.lift})
+        }
 
-  def build(t:Expr[T]): DataSortSignature
 
-}
+trait DataSortSignatureRep1[T]:
+
+   def name: String
+
+
+
+
 
 

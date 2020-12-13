@@ -1,6 +1,7 @@
 package ua.ips.algo
 
 import scala.annotation.alpha
+import scala.quoted._
 
 
 sealed trait Condition:
@@ -14,6 +15,8 @@ sealed trait Condition:
   def not: Condition =
      NotCondition(this)
 
+  def lift(using Quotes): Expr[Condition]
+
 
 object Condition:
   def base(signature: DataSortSignature, args: Seq[Name]): Condition =
@@ -26,11 +29,16 @@ object Condition:
           throw new SchemaBuildException("non boolean signature")
 
 
-case class BaseCondition(signature: DataSortSignature, args:Seq[Name]) extends Condition
+case class BaseCondition(signature: DataSortSignature, args:Seq[Name]) extends Condition:
+  def lift(using Quotes): Expr[Condition] = '{BaseCondition(${signature.lift}, ${Expr.ofSeq(args.map(x=>Expr(x)))}) }
 
-case class AndCondition(x:Condition, y:Condition) extends Condition
+case class AndCondition(x:Condition, y:Condition) extends Condition:
+  def lift(using Quotes): Expr[Condition] = '{AndCondition(${x.lift}, ${y.lift}) }
   
-case class OrCondition(x:Condition, y:Condition) extends Condition
+case class OrCondition(x:Condition, y:Condition) extends Condition:
+  def lift(using Quotes): Expr[Condition] = '{OrCondition(${x.lift}, ${y.lift}) }
 
-case class NotCondition(x:Condition) extends Condition
+case class NotCondition(x:Condition) extends Condition:
+  def lift(using Quotes): Expr[Condition] = '{ NotCondition(${x.lift}) }
+
 

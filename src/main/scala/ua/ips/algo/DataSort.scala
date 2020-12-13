@@ -1,11 +1,23 @@
 package ua.ips.algo
 
-sealed trait DataSort
-case class BasicDataSort(name:String) extends DataSort
-case class Cartesian(elements: IndexedSeq[DataSort]) extends DataSort
-case class NamedSet(elements: Map[String,DataSort]) extends DataSort
+import scala.quoted._
 
-trait DataSortRep[T] {
+sealed trait DataSort:
+  def lift(using Quotes): Expr[DataSort]
+
+case class BasicDataSort(name:String) extends DataSort:
+  def lift(using Quotes): Expr[DataSort] = '{ BasicDataSort(${Expr(name)}) }
+
+case class Cartesian(elements: IndexedSeq[DataSort]) extends DataSort:
+  def lift(using Quotes) = '{ Cartesian(${Expr.ofSeq(elements.map(_.lift))}.toIndexedSeq) }
+
+case class NamedSet(elements: Map[String,DataSort]) extends DataSort:
+  def lift(using Quotes): Expr[DataSort] =
+       '{ NamedSet( ${Expr.ofSeq(
+              elements.toSeq.map(x => Expr.ofTupleFromSeq(Seq(Expr(x._1),x._2.lift)).asExprOf[(String,DataSort)])
+        )}.toMap ) }
+
+trait DataSortRep[T]:
    
    def dataSort: DataSort
 
@@ -15,7 +27,6 @@ trait DataSortRep[T] {
    def constant(interpretation:Interpretation)(value:T): interpretation.DataItem =
         interpretation.constant(value, this)
 
-}
 
 trait BasicDataSortRep[T] extends DataSortRep[T] {
 

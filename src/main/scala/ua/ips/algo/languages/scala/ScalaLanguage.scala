@@ -6,9 +6,9 @@ import scala.quoted._
 //import scala.quoted.staging._
 
 //class ScalaLanguage extends Language {
-trait ScalaLanguage(using val qctx: QuoteContext) extends Language {
+trait ScalaLanguage(using val qctx: Quotes) extends Language {
 
-  import qctx.tasty._
+  import qctx.reflect._
 
   type Ast = Term
 

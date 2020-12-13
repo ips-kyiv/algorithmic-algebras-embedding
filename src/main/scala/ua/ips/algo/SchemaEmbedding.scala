@@ -1,90 +1,157 @@
 package ua.ips.algo
 
 import scala.quoted._
+import scala.compiletime._
 
-class SchemaEmbedding(using val qctx: QuoteContext) {
+case class SchemaCompileException(msg:String, posExpr: Expr[Any]) extends RuntimeException
 
-  import qctx.tasty._
+class SchemaEmbedding(using val qctx: Quotes) {
 
-  case class SchemaPart[T](
-      expr: Expr[T] ,
-      sortTypes: Set[qctx.tasty.Type],
-      names: Map[String, DataSort]
+  import quotes.reflect._
+
+  case class WithBase[T](
+     base: Expr[SchemaBase] = '{ SchemaBase(sorts = Set.empty, signatures = Set.empty) },
+     value: Expr[T]
   )
+ 
 
-  def buildImpl[A:quoted.Type, B:quoted.Type](f:Expr[A=>B]):Expr[Schema] = {
-      f.unseal match 
+  def tryBuild[A:quoted.Type, B:quoted.Type](f:Expr[A=>B]): Expr[Schema] = 
+     try
+       val r = buildImpl[A,B](f)
+       println(s"schema-expression: $r")
+       r
+     catch
+       case SchemaCompileException(msg,posExpr) =>
+          report.error(msg, posExpr)  
+          '{???}
+
+  def buildImpl[A:quoted.Type, B:quoted.Type](f:Expr[A=>B]): Expr[Schema] = {
+      Term.of(f) match 
          case Lambda(params, body) =>
-                 val startPart = buildStartPart()
                  val param = params.head
-                 val paramSort = findDataSort(param.tpt.tpe, startPart, f)
-                 val bodySchema = processTerm(body, paramSort)
-                 '{ 
-                    SequentialSchema(
-                     InputSchema(${Expr(param.name)}, ${paramSort.expr}),
-                     ${bodySchema.expr}
-                    )
-                  }
+                 val paramSort = findDataSort(param.tpt.tpe, f)
+                 val bodySchema = processTerm(body, '{ SchemaBase(sorts=Set(${paramSort}), signatures=Set.empty) } )
+                 val base = bodySchema.base
+                 '{
+                   SequentialSchema(
+                    // TODO: more that one param
+                    InputSchema(${Expr(param.name)}, ${paramSort}),
+                    ${bodySchema.value}
+                   )
+                 }
+         case Inlined(x,List(),body) => buildImpl[A,B](body.asExprOf[A=>B])
+         case Block(List(),last) => buildImpl[A,B](last.asExprOf[A=>B])
          case _ =>
-              report.error("lambda function expected", f)  
-              '{???}
+              throw SchemaCompileException(s"lambda function expected, we have ${Term.of(f)}",f)
   }
 
 
-  def buildStartPart() = SchemaPart[Unit](
-                              expr = '{()},
-                              sortTypes = Set.empty,
-                              names = Map.empty
-                            )
 
 
-  def findDataSort(tp: qctx.tasty.Type, state: SchemaPart[_], posExpr: Expr[_]): SchemaPart[DataSort] = {
+  def findDataSort(tp: TypeRepr, posExpr: Expr[_]): Expr[DataSort] = 
+    tp.widen.asType match
+      case '[t] => Expr.summon[DataSortRep[t]] match
+                      case Some(r) => ' { $r.dataSort }
+                      case None => 
+                           throw SchemaCompileException(s"Can't find DataSortRep for ${tp.show}", posExpr)
+      case _ => throw SchemaCompileException("Can't determinate type for ${tp.seal.show}", posExpr)
 
-    def retrieveSummon[T:quoted.Type](t: quoted.Type[T]): Option[Expr[DataSortRep[T]]] =
-       Expr.summon[DataSortRep[T]] 
 
-    import qctx.tasty._
-    tp.seal match
-      case '[$t] => retrieveSummon(t) match
-                      case Some(r) => 
-                        SchemaPart('{ ${r}.dataSort }, sortTypes = state.sortTypes + tp, names=state.names)
-                      case None => report.error("Can't find DataSortRep for ${t.show}", posExpr)
-                                   SchemaPart('{???}, state.sortTypes, state.names)
-      case _ => report.error("Can't determinate type for ${tp.seal.show}")
-                ??? 
-
-  }
-
-  def processTerm(body: Term, state: SchemaPart[_]): SchemaPart[Schema] =
+  def processTerm(body: Term, base: Expr[SchemaBase]): WithBase[Schema] =
     body match
-      case Block(statements,last) => processBlock(statements, last, state)
-      case app@Apply(obj, args) => processApply(app, state)
-      case Literal(constant) => processLiteral(constant, state)
+      case Block(statements,last) => processBlock(statements, last, base)
+      case id@Ident(name) => processIdent(id, base)
+      case app@Apply(obj, args) => processApply(app, base)
+      case lt@Literal(constant) => processLiteral(lt, base)
       case _ => 
-           report.error("term is not supported yet ${body}", body.seal)
-           ???
+           throw SchemaCompileException(s"term is not supported yet ${body}", body.asExpr)
 
-  private def processBlock(statements:List[Statement], last: Term, state: SchemaPart[_]): SchemaPart[Schema] = 
+
+  private def processBlock(statements:List[Statement], last: Term, base: Expr[SchemaBase]): WithBase[Schema] = 
     statements match
-      case Nil => processTerm(last, state)
+      case Nil => processTerm(last, base)
       case head::tail => 
-         val frs = processStatement(head, state)
-         val snd = processBlock(tail, last, frs)
-         val expr = '{  SequentialSchema( ${frs.expr}, ${snd.expr} ) }
-         SchemaPart(expr, snd.sortTypes, snd.names)
+         val frs = processStatement(head, base)
+         val snd = processBlock(tail, last, frs.base)
+         val expr =  '{ SequentialSchema( ${frs.value},  ${snd.value} ) }
+         WithBase(base, expr)
 
-  private def processApply(applyTerm: Apply, state: SchemaPart[_]): SchemaPart[Schema] =
+  private def processApply(applyTerm: Apply, base: Expr[SchemaBase]): WithBase[Schema] =
     applyTerm match
-      case Apply(Select(obj,method),args) =>
-         ???
+      case Apply(TypeApply(sel@Select(obj,method),typeArgs), args) =>
+         throw SchemaCompileException("type arguments are not supported", applyTerm.asExpr)
+      case Apply(sel@Select(obj,method),args) =>
+         val objSchema = processTerm(obj, base)
+         val objSort = findDataSort(obj.tpe, obj.asExpr )
+         var state = objSchema.base
+         var argsExprs: List[Expr[DataExpression]] = Nil
+         var cArgs = args
+         while(!cArgs.isEmpty) {
+             val cState = processTerm(cArgs.head,state)
+             cArgs = cArgs.tail
+             state = cState.base
+             val expr = '{
+                ${cState.value} match
+                   case OutputSchema(e) => e
+                   case _  =>
+                      throw SchemaBuildException("Expected data expression")
+             }
+             argsExprs = expr::argsExprs
+         }
+         argsExprs = argsExprs.reverse
+         // we assume, that object is a first argument
+         val objExpr = '{
+           ${objSchema.value} match
+               case OutputSchema(e) => e
+               case _ =>
+                  throw SchemaBuildException("Expected data expression")
+         }
+         argsExprs = objExpr::argsExprs
+         val outSort = findDataSort(applyTerm.tpe, applyTerm.asExpr)
+         val argsSorts = argsExprs.map( r => '{ $r.sort } )
+         val signature = buildDataSortSignature(sel, argsSorts, outSort)
+         val newBase = '{  ${state}.copy(signatures = ${state}.signatures + ${signature})  }
+         val newSchema = '{
+             OutputSchema(FunctionalExpression(${signature},${Expr.ofSeq(argsExprs)}))
+         }
+         WithBase[Schema](base=newBase, value = newSchema)
       case Apply(Ident(name),args) =>
          ???
+      case Apply(Apply(x,args1),args2) =>
+         throw SchemaCompileException("curried arguments are not supported", applyTerm.asExpr)
+      case _ =>
+         throw SchemaCompileException("construction is not supported", applyTerm.asExpr)
     
-  private def processStatement(st: Statement, state: SchemaPart[_]): SchemaPart[Schema] = ???
+  private def processStatement(st: Statement, base: Expr[SchemaBase]): WithBase[Schema] = ???
 
+  private def processIdent(id: Ident, base: Expr[SchemaBase]): WithBase[Schema] =
+        val sort = findDataSort(id.tpe.widen, id.asExpr)
+        val newSchema = '{ OutputSchema(DataAccessExpression( ${Expr(id.name)}, ${sort} )) }
+        WithBase(base, newSchema)
   
-  private def processLiteral(term: Constant, state: SchemaPart[_]): SchemaPart[Schema] = ???
+  private def processLiteral(term: Literal, state: Expr[SchemaBase]): WithBase[Schema] = 
+        val sort = findDataSort(term.tpe.widen, term.asExpr)
+        val newBase = '{  ${state}.copy(sorts = ${state}.sorts + ${sort})  }
+        val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.constant.show)})) }
+        WithBase(newBase, schema)
 
+
+  //  TODO: check that appropriative operations on DataRep exists ?
+  private def buildDataSortSignature(sel: Select, paramSorts: Seq[Expr[DataSort]], out: Expr[DataSort]): Expr[DataSortSignature] =
+        val paramSymms = sel.symbol.paramSymss
+        println(s"buildDataSignature, paramSymms=$paramSymms")
+        if (paramSymms.isEmpty)
+           throw SchemaCompileException("should be method call", sel.asExpr)
+        if (paramSymms.size > 1)
+           throw SchemaCompileException("not a simple function", sel.asExpr)
+        val paramSyms = paramSymms.head
+        val paramNames = paramSyms.map(_.name)
+        val paramDescriptions: Seq[Expr[(String,DataSort)]] = paramNames.zip(paramSorts).map{
+            case (name, sort) => Expr.ofTupleFromSeq(Seq(Expr(name),sort)).asExprOf[(String,DataSort)]
+        }
+        '{ DataSortSignature(${Expr(sel.name)}, ${Expr.ofSeq(paramDescriptions)}, $out) }
+        
+        
 }
 
 object SchemaEmbedding {
@@ -93,11 +160,10 @@ object SchemaEmbedding {
       buildImpl[A,B]('f)
   }
 
-
-  def buildImpl[A:Type, B:Type](f:Expr[A=>B])(using qctx:QuoteContext):Expr[Schema] = {
-      import qctx.tasty._
+  def buildImpl[A:Type, B:Type](f:Expr[A=>B])(using Quotes):Expr[Schema] = {
+      import quotes.reflect._
       val embedding = new SchemaEmbedding
-      embedding.buildImpl(f)
+      embedding.tryBuild(f)
   }
 
 }

@@ -1,5 +1,5 @@
 
-val dottyVersion = "0.26.0-RC1"
+val dottyVersion = "3.0.0-M2"
 //val dottyVersion = dottyLatestNightlyBuild.get
 
 lazy val root = project
@@ -11,8 +11,10 @@ lazy val root = project
     //scalacOptions ++= Seq( "-Ydebug:implicits", "-Ydebug-trace", "-Ydebug-names", "-Ylog:typer", "-Yplain-printer" ),
     scalacOptions ++= Seq( "-unchecked", "-explain-types",  "-Ydebug-trace", "-Ydebug-names"  ),
 
-    libraryDependencies += "ch.epfl.lamp" %% "dotty-staging" % dottyVersion,
-    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test"
+    libraryDependencies += "org.scala-lang" %% "scala3-staging" % dottyVersion,
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.19" % Test,
+    //libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test"
+    testFrameworks += new TestFramework("munit.Framework")
   )
 
 
