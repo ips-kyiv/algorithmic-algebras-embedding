@@ -13,8 +13,8 @@ lazy val root = project
 
     libraryDependencies += "org.scala-lang" %% "scala3-staging" % dottyVersion,
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.19" % Test,
-    //libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test"
-    testFrameworks += new TestFramework("munit.Framework")
+    testFrameworks += new TestFramework("munit.Framework"),
+    resolvers += Resolver.sbtPluginRepo("releases")
   )
 
 
