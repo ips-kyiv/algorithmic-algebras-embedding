@@ -1,5 +1,5 @@
 
-val dottyVersion = "3.0.0-M2"
+val dottyVersion = "3.0.0-M3"
 //val dottyVersion = dottyLatestNightlyBuild.get
 
 lazy val root = project
@@ -12,7 +12,7 @@ lazy val root = project
     scalacOptions ++= Seq( "-unchecked", "-explain-types",  "-Ydebug-trace", "-Ydebug-names"  ),
 
     libraryDependencies += "org.scala-lang" %% "scala3-staging" % dottyVersion,
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.19" % Test,
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.20" % Test,
     testFrameworks += new TestFramework("munit.Framework"),
     resolvers += Resolver.sbtPluginRepo("releases")
   )

@@ -26,7 +26,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
           '{???}
 
   def buildImpl[A:quoted.Type, B:quoted.Type](f:Expr[A=>B]): Expr[Schema] = {
-      Term.of(f) match 
+      f.asTerm match 
          case Lambda(params, body) =>
                  val param = params.head
                  val paramSort = findDataSort(param.tpt.tpe, f)
@@ -42,7 +42,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
          case Inlined(x,List(),body) => buildImpl[A,B](body.asExprOf[A=>B])
          case Block(List(),last) => buildImpl[A,B](last.asExprOf[A=>B])
          case _ =>
-              throw SchemaCompileException(s"lambda function expected, we have ${Term.of(f)}",f)
+              throw SchemaCompileException(s"lambda function expected, we have ${f.asTerm}",f)
   }
 
 
@@ -186,7 +186,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
 
   private def processStatement(st: Statement, base: Expr[SchemaBase]): WithBase[Schema] = 
         st match
-           case Import(x) => ???
+           case Import(term,selectors) => ???
            //case Export(x) => ???
            case d: Definition =>
               d match

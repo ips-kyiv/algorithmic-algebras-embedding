@@ -58,7 +58,7 @@ case class Cartesian2Rep[A,B](a: DataSortRep[A], b: DataSortRep[B]) extends Data
    val dataSort: DataSort = Cartesian(IndexedSeq(a.dataSort, b.dataSort))
 
 
-given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]) as DataSortRep[(A,B)] =
+given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): DataSortRep[(A,B)] =
    Cartesian2Rep(a,b)
 
 
