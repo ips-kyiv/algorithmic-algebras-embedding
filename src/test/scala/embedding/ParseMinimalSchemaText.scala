@@ -60,6 +60,7 @@ class ParseMinimalSchemaTest extends FunSuite {
           //}
         }
     } 
+    println(schema)
   }
 
 
