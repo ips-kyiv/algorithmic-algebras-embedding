@@ -49,6 +49,19 @@ class ParseMinimalSchemaTest extends FunSuite {
 
   }
 
+  test("parseParLoop") {
+    val schema = Schema.build{
+      (x:Int) =>
+        var y = x
+        for(a <- (1 to 4).par(4)) {
+           // TODO: tread_index
+          // TODO: atomit{
+            y = y + a
+          //}
+        }
+    } 
+  }
+
 
 
 }

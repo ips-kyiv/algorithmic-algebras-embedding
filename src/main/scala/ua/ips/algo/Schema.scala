@@ -40,11 +40,15 @@ case class LoopSchema(cond: Condition, body: Schema) extends Schema:
   def lift(using Quotes): Expr[Schema] = '{LoopSchema(${cond.lift}, ${body.lift})}
 
 
-case class ParallelIterationSchema(variable: Name, 
+case class ParallelIterationSchema(varName: Name,
                                       start: DataExpression, 
-                                      end: DataExpression) extends Schema:
+                                      end: DataExpression,
+                                      workSize: DataExpression,
+                                      body: Schema) extends Schema:
 
-  def lift(using Quotes): Expr[Schema] = '{ ParallelIterationSchema( ${Expr(variable)}, ${start.lift}, ${end.lift} ) }
+  def lift(using Quotes): Expr[Schema] = '{ 
+    ParallelIterationSchema( ${Expr(varName)}, ${start.lift}, ${end.lift}, ${workSize.lift}, ${body.lift} ) 
+  }
   
 
 

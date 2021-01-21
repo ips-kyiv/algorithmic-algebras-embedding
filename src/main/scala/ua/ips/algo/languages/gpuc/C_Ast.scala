@@ -1,9 +1,9 @@
 package ua.ips.algo.languages.gpuc
 
 
-sealed trait CAst
+sealed trait C_Ast
 
-sealed trait Expression extends CAst with ForInit
+sealed trait Expression extends C_Ast with ForInit
 
 sealed trait PrimaryExpression extends PostfixExpression
 

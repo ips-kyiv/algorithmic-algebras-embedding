@@ -140,7 +140,11 @@ class SchemaEmbedding(using val qctx: Quotes) {
   private def processApply(applyTerm: Apply, base: Expr[SchemaBase]): WithBase[Schema] =
     applyTerm match
       case Apply(TypeApply(sel@Select(obj,method),typeArgs), args) =>
-         throw SchemaCompileException("type arguments are not supported", applyTerm.asExpr)
+         if (method=="foreach" && obj.tpe <:< TypeRepr.of[ParRange] ) {
+            processParRange(obj, args.head, base)
+         } else {
+           throw SchemaCompileException(s"type arguments are not supported (term=${applyTerm})", applyTerm.asExpr)
+         }
       case Apply(sel@Select(obj,method),args) =>
          val objSchema = processTerm(obj, base)
          val objSort = findDataSort(obj.tpe, obj.asExpr )
@@ -207,6 +211,52 @@ class SchemaEmbedding(using val qctx: Quotes) {
                  case _ => 
                    throw SchemaCompileException(s"definition other then ValDef are not supported ${d}", d.asExpr)
            case t: Term => processTerm(t, base)
+
+
+  private def processParRange( parRange: Term, foreachArg: Term, base: Expr[SchemaBase]): WithBase[Schema] =
+      foreachArg match
+         case Lambda(params, body) =>
+            if (params.length > 1) {
+               throw SchemaCompileException("parRagne foreach should have one argument", foreachArg.asExpr)
+            }
+            var param = params.head
+            val paramSort = findDataSort(param.tpt.tpe, foreachArg.asExpr)
+            val (start,finish, workSize) = parRange match
+               case Apply(Apply(par,List(range)),List(workSize)) =>
+                  range match
+                     case Apply(Select(startRangeWrapped,"to"),List(endRange)) =>
+                        startRangeWrapped match
+                           case Apply(intWrapper,List(startRange)) =>
+                              (startRange, endRange, workSize)
+                           case _ =>
+                              throw SchemaCompileException("Can't parse startRange", startRangeWrapped.asExpr)
+                     case _ =>
+                        throw SchemaCompileException("Can't parse range, shoud be in form (x to y)",range.asExpr)
+               case _ =>
+                  throw SchemaCompileException("Can't parse parRange, should be in form (x to y).par(z)",parRange.asExpr)
+            println(s"!parRange=${parRange}")
+            println(s"!start=${start}")
+            println(s"!finish=${finish}")
+            println(s"!workSize = ${workSize} ")
+            val startSchema = processTerm(start,base)
+            val finishSchema = processTerm(finish,startSchema.base)
+            val workSizeSchema = processTerm(workSize, finishSchema.base)
+            val bodySchema = processTerm(body, workSizeSchema.base)
+            val r = '{
+               ParallelIterationSchema(
+                  ${Expr(param.name)},
+                  ${startSchema.value}.asDataExpression,
+                  ${finishSchema.value}.asDataExpression,
+                  ${workSizeSchema.value}.asDataExpression,
+                  ${bodySchema.value}
+               )
+            }
+            WithBase(bodySchema.base, r)
+         case Inlined(x,List(),body) => processParRange(parRange, body, base)
+         case Block(List(), body) => processParRange(parRange, body, base)
+         case _ =>
+            throw SchemaCompileException("Lambda in parRange foreach is expected", foreachArg.asExpr)
+
 
   private def processIdent(id: Ident, base: Expr[SchemaBase]): WithBase[Schema] =
         val sort = findDataSort(id.tpe.widen, id.asExpr)

@@ -9,7 +9,7 @@ trait CTranslator {
     outputs: IndexedSeq[OutputSchema]
   )
 
-  def translate(schema: Schema, flavor: CBase): CAst =
+  def translate(schema: Schema, flavor: CBase): C_Ast =
      ???
 
 
