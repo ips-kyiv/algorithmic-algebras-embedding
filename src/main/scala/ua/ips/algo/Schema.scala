@@ -2,7 +2,9 @@ package ua.ips.algo
 
 import scala.quoted._
 
-case class SchemaBase(sorts: Set[DataSort], signatures: Set[DataSortSignature])
+case class SchemaBase(
+  sorts: Set[DataSort], 
+  signatures: Set[DataSortSignature])
 
 /**
  * representation of AlgoSchema

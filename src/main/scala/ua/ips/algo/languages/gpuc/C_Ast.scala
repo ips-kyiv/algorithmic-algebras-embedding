@@ -1,5 +1,6 @@
 package ua.ips.algo.languages.gpuc
 
+//  https://github.com/antlr/grammars-v4/blob/master/c/C.g4
 
 sealed trait C_Ast
 

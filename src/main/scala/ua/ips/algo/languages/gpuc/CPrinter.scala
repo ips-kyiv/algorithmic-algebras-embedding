@@ -137,6 +137,8 @@ case class PrintState(
     else 
       block1.copy(nLines = 1, value=sb.append("\n").toString())
              
+  def printedString():String =
+    collectBlock().value
 
 }
 
