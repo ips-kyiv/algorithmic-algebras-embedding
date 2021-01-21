@@ -24,6 +24,7 @@ case class SequentialSchema(x: Schema, y: Schema) extends Schema:
 
   def lift(using Quotes): Expr[Schema] = '{SequentialSchema(${x.lift}, ${y.lift})}
 
+
 case class ParallelSchema(x: Schema, y: Schema) extends Schema:
 
   def lift(using Quotes): Expr[Schema] = '{ParallelSchema(${x.lift}, ${y.lift})}
@@ -33,9 +34,19 @@ case class ConditionalSchema(cond: Condition, ifTrue: Schema, ifFalse: Schema) e
 
   def lift(using Quotes): Expr[Schema] = '{ConditionalSchema(${cond.lift}, ${ifTrue.lift}, ${ifFalse.lift})}
 
+
 case class LoopSchema(cond: Condition, body: Schema) extends Schema:
 
   def lift(using Quotes): Expr[Schema] = '{LoopSchema(${cond.lift}, ${body.lift})}
+
+
+case class ParallelIterationSchema(variable: Name, 
+                                      start: DataExpression, 
+                                      end: DataExpression) extends Schema:
+
+  def lift(using Quotes): Expr[Schema] = '{ ParallelIterationSchema( ${Expr(variable)}, ${start.lift}, ${end.lift} ) }
+  
+
 
 case class AssertSchema(cond: Condition) extends Schema:
   def lift(using Quotes): Expr[Schema] = '{AssertSchema(${cond.lift})}

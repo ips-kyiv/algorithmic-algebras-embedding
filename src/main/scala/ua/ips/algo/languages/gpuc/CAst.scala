@@ -1,7 +1,6 @@
 package ua.ips.algo.languages.gpuc
 
 
-
 sealed trait CAst
 
 sealed trait Expression extends CAst with ForInit
@@ -251,15 +250,15 @@ case object GENERIC extends AddressSpaceQualifier
 
 sealed trait FunctionSpecifier extends DeclarationSpecifier
 case object INLINE extends FunctionSpecifier
-case object _NORETURN extends FunctionSpecifier
-case object __STDCALL extends FunctionSpecifier
-case class __Declspec(value: Identifier) extends FunctionSpecifier
+case object NORETURN extends FunctionSpecifier
+case object STDCALL extends FunctionSpecifier
+case class Declspec(value: Identifier) extends FunctionSpecifier
 
 // OpenCL
 sealed trait KernelSpecifier extends FunctionSpecifier
 case object KERNEL extends KernelSpecifier
 case class VecTypeHint(typeName: TypeName)  extends KernelSpecifier
-case class WorkGroupSize(sizes: List[Int]) extends KernelSpecifier
+case class WorkGroupSizeHint(sizes: List[Int]) extends KernelSpecifier
 
 sealed trait AlignmentSpecifer extends DeclarationSpecifier
 case class AligmentAsTypeSpecifier(typeName: TypeName) extends AlignmentSpecifer

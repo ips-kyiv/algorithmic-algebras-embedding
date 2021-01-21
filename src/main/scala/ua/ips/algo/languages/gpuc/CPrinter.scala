@@ -119,10 +119,18 @@ case class PrintState(
             s.copy(nCols = col)
           else
             s
+        case Whitespace =>
+          // TODO: merfe 
+          sb.append(" ")
+          col += 1
+          s
         case NewLine =>
           sb.append("\n")
           col = -params.leftMargin
           s.copy(nLines = s.nLines + 1)
+        case EmptyPrint =>
+          // do nothing.
+          s
     }
     if ( block1.nLines > 0 ) then
       block1.copy(value = sb.toString())
@@ -278,6 +286,7 @@ given Printer[DeclarationSpecifier] with
         case x:SpecifierQualifier => summon[Printer[SpecifierQualifier]].print(x,state)
         case x:StorageClassSpecifier => summon[Printer[StorageClassSpecifier]].print(x,state)
         case x:AddressSpaceQualifier => summon[Printer[AddressSpaceQualifier]].print(x,state)
+        case x:FunctionSpecifier => summon[Printer[FunctionSpecifier]].print(x,state)
       
 
 given Printer[List[DeclarationSpecifier]] with
@@ -349,6 +358,49 @@ given printer__M128I: Printer[__M128I.type] = constWordPrinter("__m128i")
 given Printer[AtomicTypeSpecifier] with
     def print(data: AtomicTypeSpecifier, state: PrintState): PrintState =
       state.addSmallBlock("_Atomic").addSmallBlock("(").print(data.typeName).addSmallBlock(")")
+
+
+given Printer[FunctionSpecifier] with
+    def print(data: FunctionSpecifier, state: PrintState): PrintState =
+      data match
+        case INLINE => printerINLINE.print(INLINE,state)
+        case NORETURN => printerNORETURN.print(NORETURN,state)
+        case STDCALL => printerSTDCALL.print(STDCALL,state)
+        case x: Declspec => summon[Printer[Declspec]].print(x,state) 
+        case x: KernelSpecifier => summon[Printer[KernelSpecifier]].print(x,state)
+
+          
+given printerINLINE: Printer[INLINE.type] = constWordPrinter("inline")
+given printerNORETURN: Printer[NORETURN.type] = constWordPrinter("_Noreturn")
+given printerSTDCALL: Printer[STDCALL.type] = constWordPrinter("__stdcall")
+
+given Printer[Declspec] with
+   def print(data: Declspec, state: PrintState): PrintState =
+      state.addSmallBlock("__declspec").addSmallBlock("(").print(data.value).addSmallBlock(")")
+
+given Printer[KernelSpecifier] = Printer.derived
+
+given printerKERNEL: Printer[KERNEL.type] = constWordPrinter("kernel") 
+
+given Printer[VecTypeHint] with
+   def print(data: VecTypeHint, state: PrintState): PrintState =
+     state.addSmallBlock("__attribute__")
+          .addSmallBlock("((")
+          .addSmallBlock("__vec_type_hint(")
+          .print(data.typeName)
+          .addSmallBlock(")")
+          .addSmallBlock("))")   
+
+
+given Printer[WorkGroupSizeHint] with
+   def print(data: WorkGroupSizeHint, state: PrintState): PrintState =
+     state.addSmallBlock("__attribute__")
+          .addSmallBlock("((")
+          .addSmallBlock("__work_group_size_hint(")
+          .print(SeparatedList[IntConstant,PrintToken](data.sizes.map(IntConstant(_)),SmallBlock(",")))
+          .addSmallBlock(")")
+          .addSmallBlock("))")   
+
 
 given Printer[StructOrUnionSpecifier] with
     
