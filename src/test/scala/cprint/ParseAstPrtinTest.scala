@@ -29,6 +29,8 @@ class ParseAstPrintTest extends FunSuite {
     println(res)
 
     assert(res.contains("x"))
+    assert(res.contains("1"))
+    assert(res.contains("+"))
 
    }
 

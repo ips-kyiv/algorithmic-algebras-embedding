@@ -898,6 +898,7 @@ given Printer[Statement] with
       case x:IterationStatement => summon[Printer[IterationStatement]].print(x,state)
       case x:JumpStatement => summon[Printer[JumpStatement]].print(x,state)
       case x:AsmStatement => summon[Printer[AsmStatement]].print(x,state)
+      case STRAY_SEMICOLON => summon[Printer[STRAY_SEMICOLON.type]].print(STRAY_SEMICOLON, state)
 
 given Printer[LabeledStatement] = Printer.derived
 
@@ -1017,6 +1018,7 @@ given Printer[AsmStatement] with
         .print(data.data)
         .addSmallBlock(")")
         .addSmallBlock(";")
+
 
 
 
