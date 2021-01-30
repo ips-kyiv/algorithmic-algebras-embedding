@@ -2,17 +2,6 @@ package ua.ips.algo
 
 import scala.quoted._
 
-/*
-nodeEnry {
-   cost:
-     // target:  [ CUDA, OpenCL,  OpenMP ]
-     [ (copy: 10),  sum(10), mem(10) ]
-
-   dataDependencies
-   controlFlowDepende
-}
-*/
-
 
 case class SchemaBase(
   sorts: Set[DataSort], 

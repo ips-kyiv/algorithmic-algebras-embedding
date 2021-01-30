@@ -2,6 +2,7 @@ package cprint
 
 import ua.ips.algo._
 import ua.ips.algo.given
+import ua.ips.algo.translation._
 
 import munit._
 
@@ -9,8 +10,8 @@ class ParseAstPrintTest extends FunSuite {
 
    test("print simple expression") {
 
-    import ua.ips.algo.languages.gpuc._ 
-    import ua.ips.algo.languages.gpuc.given
+    import ua.ips.algo.translation.languages.gpuc._ 
+    import ua.ips.algo.translation.languages.gpuc.given
     
 
     val cAst = (

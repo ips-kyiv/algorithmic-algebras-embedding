@@ -1,5 +1,6 @@
-package ua.ips.algo
+package ua.ips.algo.translation
 
+import ua.ips.algo._
 
 
 trait Language {
@@ -7,7 +8,6 @@ trait Language {
   type AstDef
 
   case class OutputBundle(name: String, compilationUnits:Map[String,AstDef])
-
 
   val baseInterpretation: Interpretation;
 
@@ -17,12 +17,7 @@ trait Language {
 
   def signatureDef(items: Seq[AstDef]): AstDef
   
-  //
-  //def predicateDef(): Seq[AstDef]
-
-
   def run(bundle: OutputBundle): baseInterpretation.DataItem
-
 
   def write(bundle: OutputBundle, dataDir: String): Unit
 

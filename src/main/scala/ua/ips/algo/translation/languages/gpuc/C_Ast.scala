@@ -1,4 +1,4 @@
-package ua.ips.algo.languages.gpuc
+package ua.ips.algo.translation.languages.gpuc
 
 //  https://github.com/antlr/grammars-v4/blob/master/c/C.g4
 

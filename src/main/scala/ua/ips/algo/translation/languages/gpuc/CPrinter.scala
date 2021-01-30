@@ -1,4 +1,4 @@
-package ua.ips.algo.languages.gpuc
+package ua.ips.algo.translation.languages.gpuc
 
 import scala.compiletime._
 import scala.deriving._
