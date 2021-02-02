@@ -27,7 +27,7 @@ class ParseMinimalSchemaTest extends FunSuite {
     println(schema)
     schema match
       case SequentialSchema(
-              InputSchema(variable,sort),
+              InputSchema(params),
               ConditionalSchema(c,x,y)
            ) =>
          assert(true)

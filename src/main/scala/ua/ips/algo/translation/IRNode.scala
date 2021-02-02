@@ -127,6 +127,28 @@ object ParIRNode:
 
 end ParIRNode
 
+case class CondIRNode(id: String, 
+                    schema: Option[Schema], 
+                    cond: IRDataExpression, 
+                    ifTrue: IRNode, 
+                    ifFalse: IRNode ) extends IRNode {
+
+  def subnode(names: Seq[String]) =
+      if (names.isEmpty) Some(this) 
+      else 
+        names.head match
+          case "t" => Some(ifTrue)
+          case "f" => Some(ifFalse)
+          case _ => None
+          
+          
+  def costEstimations(ctx: IRContext): CostEstimations =
+    ifTrue.costEstimations(ctx).altMerge(ifFalse.costEstimations(ctx))
+
+
+}
+
+
 
 case class EmptyIRNode(id: String) extends IRNode:
 
@@ -136,5 +158,17 @@ case class EmptyIRNode(id: String) extends IRNode:
     if (names.isEmpty) Some(this) else None
 
   def costEstimations(ctx: IRContext) = CostEstimations.ZERO
+
+
+
+case class IRVar(id: String,
+                 schema: Option[Schema],
+                 name: String,
+                 init: IRDataExpression) extends IRNode:
+
+  def subnode(names: Seq[String]) =
+    if (names.isEmpty) Some(this) else None
+
+  def costEstimations(ctx: IRContext) = ???
 
 

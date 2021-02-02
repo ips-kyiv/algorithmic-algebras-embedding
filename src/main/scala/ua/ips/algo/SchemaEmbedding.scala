@@ -15,9 +15,9 @@ class SchemaEmbedding(using val qctx: Quotes) {
   )
  
 
-  def tryBuild[A:quoted.Type, B:quoted.Type](f:Expr[A=>B]): Expr[Schema] = 
+  def tryBuild[X:quoted.Type](f:Expr[X]): Expr[Schema] = 
      try
-       val r = buildImpl[A,B](f)
+       val r = buildImpl[X](f)
        println(s"schema-expression: $r")
        r
      catch
@@ -25,22 +25,23 @@ class SchemaEmbedding(using val qctx: Quotes) {
           report.error(msg, posExpr)  
           '{???}
 
-  def buildImpl[A:quoted.Type, B:quoted.Type](f:Expr[A=>B]): Expr[Schema] = {
+  def buildImpl[X:quoted.Type](f:Expr[X]): Expr[Schema] = {
       f.asTerm match 
          case Lambda(params, body) =>
-                 val param = params.head
-                 val paramSort = findDataSort(param.tpt.tpe, f)
-                 val bodySchema = processTerm(body, '{ SchemaBase(sorts=Set(${paramSort}), signatures=Set.empty) } )
+                 val inputs = params.map{ param =>
+                     val paramSort = findDataSort(param.tpt.tpe, f)
+                     '{ InputSchema.Entry(${Expr(param.name)}, ${paramSort}) } 
+                 }
+                 val bodySchema = processTerm(body, '{ SchemaBase(sorts=${Expr.ofSeq(inputs)}.map(_.sort).toSet, signatures=Set.empty) } )
                  val base = bodySchema.base
                  '{
                    SequentialSchema(
-                    // TODO: more that one param
-                    InputSchema(${Expr(param.name)}, ${paramSort}),
+                    InputSchema(${Expr.ofSeq(inputs)}),
                     ${bodySchema.value}
                    )
                  }
-         case Inlined(x,List(),body) => buildImpl[A,B](body.asExprOf[A=>B])
-         case Block(List(),last) => buildImpl[A,B](last.asExprOf[A=>B])
+         case Inlined(x,List(),body) => buildImpl[X](body.asExprOf[X])
+         case Block(List(),last) => buildImpl[X](last.asExprOf[X])
          case _ =>
               throw SchemaCompileException(s"lambda function expected, we have ${f.asTerm}",f)
   }
@@ -51,7 +52,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
   def findDataSort(tp: TypeRepr, posExpr: Expr[_]): Expr[DataSort] = 
     tp.widen.asType match
       case '[t] => Expr.summon[DataSortRep[t]] match
-                      case Some(r) => ' { $r.dataSort }
+                      case Some(r) => '{ $r.dataSort }
                       case None => 
                            throw SchemaCompileException(s"Can't find DataSortRep for ${tp.show}", posExpr)
       case _ => throw SchemaCompileException("Can't determinate type for ${tp.seal.show}", posExpr)
@@ -290,15 +291,17 @@ class SchemaEmbedding(using val qctx: Quotes) {
 
 object SchemaEmbedding {
 
-  inline def build[A,B](inline f: A=>B): Schema = ${
-      buildImpl[A,B]('f)
-  }
+   inline def build[X](inline f: X): Schema = ${
+      buildImpl[X]('f)
+   }
 
-  def buildImpl[A:Type, B:Type](f:Expr[A=>B])(using Quotes):Expr[Schema] = {
+   def buildImpl[X:Type](f:Expr[X])(using Quotes):Expr[Schema] = {
       import quotes.reflect._
       val embedding = new SchemaEmbedding
       embedding.tryBuild(f)
-  }
+   }
+
+
 
 }
 

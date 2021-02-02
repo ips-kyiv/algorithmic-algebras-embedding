@@ -61,8 +61,16 @@ case class AssertSchema(cond: Condition) extends Schema:
 
 
 //
-case class InputSchema(variable: Name, sort: DataSort) extends Schema:
-  def lift(using Quotes): Expr[Schema] = '{InputSchema(${Expr(variable)}, ${sort.lift} )}
+case class InputSchema(parameters: Seq[InputSchema.Entry]) extends Schema:
+  def lift(using Quotes): Expr[Schema] = '{ InputSchema(${Expr.ofSeq(parameters.map(_.lift))}) }
+
+object InputSchema{
+
+  case class Entry(variable: Name, sort: DataSort) {
+    def lift(using Quotes): Expr[InputSchema.Entry] = '{InputSchema.Entry(${Expr(variable)}, ${sort.lift} )}
+  }
+
+}
 
 case class AssignSchema(variable: Name, expr: DataExpression) extends Schema:
   def lift(using Quotes): Expr[Schema] = '{AssignSchema(${Expr(variable)}, ${expr.lift} )}
@@ -74,8 +82,8 @@ case class OutputSchema(expr: DataExpression) extends Schema:
 
 object Schema {
 
-  inline def build[A,B](inline f: A=>B): Schema = ${
-      SchemaEmbedding.buildImpl[A,B]('f)
+  inline def build[A](inline f: A): Schema = ${
+      SchemaEmbedding.buildImpl[A]('f)
   }
 
 }
