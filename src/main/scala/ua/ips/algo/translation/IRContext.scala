@@ -29,3 +29,4 @@ class IRContext(val target: Target) {
     
   private val allNodes: MutableHashMap[NodeId, IRNode] = MutableHashMap()
 }
+

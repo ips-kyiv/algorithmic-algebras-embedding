@@ -9,6 +9,8 @@ trait Language {
 
   case class OutputBundle(name: String, compilationUnits:Map[String,AstDef])
 
+  def genContext(ctx: IRContext): OutputBundle;
+
   val baseInterpretation: Interpretation;
 
   def dataSortDef(dataSort: DataSort): AstDef

@@ -11,6 +11,9 @@ trait CBase extends Language {
 
   type AstDef = TranslationUnit
 
+  def genContext(ctx: IRContext): OutputBundle = ???
+  
+  
   // yet not implemented
   val baseInterpretation: Interpretation = FreeInterpretation 
 

@@ -62,5 +62,12 @@ object CostEstimations:
     maxDeviceThreads = 0L
   )
 
+  /**
+  * true if x better then y on target 'target'
+  **/
+  def betterThen(target: Target, x: CostEstimations, y: CostEstimations) = false
+
+
+
 
 

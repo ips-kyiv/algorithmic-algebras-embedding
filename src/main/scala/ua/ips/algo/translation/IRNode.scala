@@ -11,6 +11,7 @@ sealed trait IRNode{
   def  costEstimations(ctx: IRContext): CostEstimations;
 
   def  subnode(ids: Seq[String]): Option[IRNode]
+  
 
   //def  cfNext(ctx: IRContex): Set[IRNode];
   //def  cfPrev(ctx: IRContex): Set[IRNode];
