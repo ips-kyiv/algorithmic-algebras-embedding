@@ -11,8 +11,12 @@ trait CBase extends Language {
 
   type AstDef = TranslationUnit
 
-  def genContext(ctx: IRContext): OutputBundle = ???
-  
+  def genContext(ctx: IRContext): OutputBundle = 
+    {
+      val name = "Main.c"
+      val ast = genMainNode(ctx)
+      OutputBundle("output",Map(name -> ast))
+    }
   
   // yet not implemented
   val baseInterpretation: Interpretation = FreeInterpretation 
@@ -49,5 +53,40 @@ trait CBase extends Language {
     val bf = Files.newBufferedWriter(nPath,StandardOpenOption.CREATE)
     new PrintWriter(bf)
     
+
+  def genMainNode(ctx: IRContext): TranslationUnit = {
+     TranslationUnit(genStandardDeclarations(ctx) ++ List(genMainDeclaration(ctx)))
+  }
+
+  def genStandardDeclarations(ctx: IRContext): List[ExternalDeclaration] = {
+    List.empty
+  }
+
+  def genMainDeclaration(ctx: IRContext): ExternalDeclaration = {
+     FunctionDefinition(specifiers=List.empty, //: List[DeclarationSpecifier], 
+            declarator = Declarator(None, 
+              FunctionDirectDeclarator(
+                Identifier("main"),
+                ParameterTypeList(List.empty, false)  // TODO:  generate params for char** args
+              )
+            ), 
+            declarations = List.empty, //: List[Declaration],  TODO: vars
+            body = genCompoundStatement(ctx, ctx.rootNode)
+      ) 
+  }
+
+  def genCompoundStatement(ctx: IRContext, node: IRNode): CompoundStatement = {
+    node match
+      case SeqIRNode(id,schema,childs) =>
+        ???
+      case _ => ???
+
+  }
+
+
+
+
+
+  
 
 }
