@@ -26,7 +26,7 @@ sealed trait PostfixExpression extends UnaryExpression
 
 case class ArrayIndexExpression(base: PostfixExpression, index: Expression) extends PostfixExpression
 
-case class FunctionCallExpression(fun: PostfixExpression, arguments: List[AssigmentExpression]) extends PostfixExpression
+case class FunctionCallExpression(fun: PostfixExpression, arguments: List[PrecAssigmentExpression]) extends PostfixExpression
 
 case class DotSelectExpression(qualifier: PostfixExpression, select: Identifier) extends PostfixExpression
 
@@ -174,7 +174,7 @@ case class TypeName(specifiers: List[SpecifierQualifier], declarator: Option[Abs
 sealed trait AbstractDeclarator extends ParameterDeclarator
 case class Pointer( typeQual: List[TypeQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
 sealed trait DirectDeclarator
-//case class IdentifierDeclator(id: Identifier) extends DirectDeclarator
+case class IdentifierDeclarator(id: Identifier) extends DirectDeclarator
 case class WrappedDirectDeclarator(declarator: Declarator) extends DirectDeclarator
 case class ArrayDirectDeclarator(base: DirectDeclarator, 
    qualifers: List[TypeQualifier], 

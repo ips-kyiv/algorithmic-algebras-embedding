@@ -19,6 +19,7 @@ case class FunctionalExpression(signature: DataSortSignature,
          ${Expr.ofSeq( args.map(_.lift) ) }
        ) }
 
+
 /*
 case class ConstantExpression[T:Liftable:Type](sort: DataSort, value:T) extends DataExpression:
 
@@ -31,6 +32,8 @@ case class ConstantExpression(sort: DataSort, value:String) extends DataExpressi
   def lift(using Quotes): Expr[DataExpression] =
     '{ ConstantExpression(${sort.lift}, ${Expr(value)}) }
 
-
+case class DataInputExpression(name:String, sort: DataSort, index: Int) extends DataExpression:
+  def lift(using Quotes): Expr[DataExpression] =
+     '{ DataInputExpression(${Expr(name)}, ${sort.lift}, ${Expr(index)}) }
 
 

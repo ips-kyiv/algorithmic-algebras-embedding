@@ -53,6 +53,22 @@ object BooleanBasicRep extends BasicDataSortRep[Boolean] {
 
 given DataSortRep[Boolean] = BooleanBasicRep
 
+
+object FloatBasicRep extends BasicDataSortRep[Float] {
+
+   val name: String = "float"
+
+}
+given DataSortRep[Float] = FloatBasicRep
+
+object DoubleBasicRep extends BasicDataSortRep[Double] {
+
+   val name: String = "double"
+
+}
+given DataSortRep[Double] = DoubleBasicRep
+
+
 case class Cartesian2Rep[A,B](a: DataSortRep[A], b: DataSortRep[B]) extends DataSortRep[(A,B)]:
 
    val dataSort: DataSort = Cartesian(IndexedSeq(a.dataSort, b.dataSort))

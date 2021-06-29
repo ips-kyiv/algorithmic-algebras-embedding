@@ -8,7 +8,7 @@ import ua.ips.algo._
 sealed trait IRNode{
   def  id: String;
   def  schema: Option[Schema];
-  def  costEstimations(ctx: IRContext): CostEstimations;
+  def  costEstimations(ctx: IRContext): CostEstimations = CostEstimations.ZERO;  // TODO: implement
 
   def  subnode(ids: Seq[String]): Option[IRNode]
   
@@ -22,11 +22,18 @@ sealed trait IRNode{
 object IRNode:
 
     def accept(ctx: IRContext, schema: Schema, rootPath: String): IRNode =
-      schema match
+      val node = schema match
         case s@SequentialSchema(x, y) =>
           SeqIRNode.create(ctx, s, rootPath)
         case p@ParallelSchema(x,y) =>
           ParIRNode.create(ctx,p, rootPath)
+        case in@InputSchema(parameters) =>
+          IRInputs.create(ctx,in,rootPath)
+        case out@OutputSchema(expr) =>
+          IROutput.create(ctx,out,rootPath)
+      ctx.addNode(rootPath, node)
+      node    
+
 
     def indexSubnode(current: IRNode, subnodes: IndexedSeq[IRNode], names: Seq[String]): Option[IRNode] = 
       if names.isEmpty then
@@ -44,6 +51,8 @@ object IRNode:
            None
 
 
+
+
 end IRNode
 
 
@@ -54,7 +63,7 @@ case class SeqIRNode(id: String,
 
     private var _costEstimantions: CostEstimations | Null = null
 
-    def costEstimations(ctx: IRContext): CostEstimations =
+    override def costEstimations(ctx: IRContext): CostEstimations =
       if (_costEstimantions != null) then
         _costEstimantions.nn
       else 
@@ -98,7 +107,7 @@ case class ParIRNode(
 
    private var _costEstimantions: CostEstimations | Null = null
 
-   def costEstimations(ctx: IRContext): CostEstimations =
+   override def costEstimations(ctx: IRContext): CostEstimations =
     if (_costEstimantions != null) then
       _costEstimantions.nn
     else 
@@ -143,7 +152,7 @@ case class CondIRNode(id: String,
           case _ => None
           
           
-  def costEstimations(ctx: IRContext): CostEstimations =
+  override def costEstimations(ctx: IRContext): CostEstimations =
     ifTrue.costEstimations(ctx).altMerge(ifFalse.costEstimations(ctx))
 
 
@@ -158,8 +167,7 @@ case class EmptyIRNode(id: String) extends IRNode:
   def subnode(names: Seq[String]) =
     if (names.isEmpty) Some(this) else None
 
-  def costEstimations(ctx: IRContext) = CostEstimations.ZERO
-
+  override def costEstimations(ctx: IRContext) = CostEstimations.ZERO
 
 
 case class IRVar(id: String,
@@ -170,6 +178,55 @@ case class IRVar(id: String,
   def subnode(names: Seq[String]) =
     if (names.isEmpty) Some(this) else None
 
-  def costEstimations(ctx: IRContext) = ???
+  override def costEstimations(ctx: IRContext) = CostEstimations.ZERO
+
+
+
+
+case class IRInputs(id: String,
+                    schema: Option[Schema],
+                    inputs: IndexedSeq[IRVar]) extends IRNode:
+
+  def subnode(names: Seq[String]): Option[IRNode] =
+    if (names.isEmpty) then
+       Some(this) 
+    else 
+      try
+        val index = names.head.toInt
+        if (index >=0 && index < names.length) then
+            inputs(index).subnode(names.tail)
+        else None
+      catch
+            case ex: NumberFormatException => None
+          
+
+              
+object IRInputs:
+
+  def create(ctx: IRContext, schema: InputSchema, rootPath: String): IRInputs = 
+      val inputsId = rootPath
+      val irParams = schema.parameters.zipWithIndex.map( (p,i) =>
+          val id = s"${inputsId}.${p.variable}"
+          val dataExpression = DataInputExpression(p.variable, p.sort, i)
+          IRVar(id,None,p.variable, IRDataExpression(s"${id}.right", dataExpression))
+      ).toIndexedSeq
+      IRInputs(inputsId, Some(schema), irParams)
+
+
+case class IROutput(
+       id: String,
+       schema: Option[Schema],
+       expr: DataExpression
+) extends IRNode:
+
+  def subnode(names: Seq[String]) =
+    if (names.isEmpty) Some(this) else None
+
+
+object IROutput:
+
+   def create(ctx: IRContext, schema: OutputSchema,  rootPath: String): IROutput =
+      IROutput(rootPath, Some(schema), schema.expr)
+
 
 

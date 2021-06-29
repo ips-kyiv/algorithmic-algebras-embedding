@@ -493,6 +493,11 @@ given Printer[Declarator] with
 
 given Printer[DirectDeclarator] = Printer.derived
 
+given Printer[IdentifierDeclarator] with
+    def print(data: IdentifierDeclarator, state: PrintState) =
+         state.print(data.id)
+
+
 given Printer[WrappedDirectDeclarator] with
     def print(data: WrappedDirectDeclarator, state: PrintState) =
          state.addSmallBlock("(").print(data.declarator).addSmallBlock(")")
@@ -690,6 +695,7 @@ given Printer[MultiplicativeExpression] with
     data match
       case x:CastExpression => summon[Printer[CastExpression]].print(x,state)
       case x:MultiplicativeBinaryExpression => summon[Printer[BinaryExpression]].print(x,state)
+      case x:AdditiveBinaryExpression => summon[Printer[BinaryExpression]].print(x,state)
 
 
 given Printer[CastExpression] with
@@ -762,7 +768,7 @@ given Printer[FunctionCallExpression] with
   def print(data: FunctionCallExpression, state: PrintState) =
     state.print(data.fun)
          .addSmallBlock("(")
-         .print(SeparatedList[AssigmentExpression,Tokens[PrintToken]](data.arguments,Tokens(SmallBlock(","),Whitespace)))
+         .print(SeparatedList[PrecAssigmentExpression,Tokens[PrintToken]](data.arguments,Tokens(SmallBlock(","),Whitespace)))
          .addSmallBlock(")") 
 
 

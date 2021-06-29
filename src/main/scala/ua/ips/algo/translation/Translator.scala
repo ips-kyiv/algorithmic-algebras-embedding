@@ -10,13 +10,16 @@ class Translator(val target: Target)
    val optimizations: Seq[IROptimizationPhase] = Seq.empty
 
    def compile(input: Schema): target.language.OutputBundle =
+      println("Translator Input: "+input)
       val optimized = optimize(input)
       codeGen(optimized)
       
    
    def optimize(input: Schema): IRContext =
       var ctx = new IRContext(target)
-      val irNode = IRNode.accept(ctx,input,"root")
+      val irNode = IRNode.accept(ctx,input,ctx.rootId)
+      println("IRNode: "+ irNode)
+      println("ctx root before optimize: " + ctx.rootNode)
       // TODO: 
       for(phase <- optimizations) {
          val nextCtx = phase.apply(ctx);
@@ -27,6 +30,7 @@ class Translator(val target: Target)
          else
             ctx = nextCtx
       } 
+      println("ctx root after optimize: " + ctx.rootNode) 
       ctx
 
       
