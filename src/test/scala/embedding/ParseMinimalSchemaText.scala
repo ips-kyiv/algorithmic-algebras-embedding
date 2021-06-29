@@ -63,6 +63,12 @@ class ParseMinimalSchemaTest extends FunSuite {
     println(schema)
   }
 
+  test("parseBinaryOp") {
+    val schema = Schema.build{
+      (x:Int, y:Int) => x + y
+    } 
+    println(schema)
+  }
 
 
 }

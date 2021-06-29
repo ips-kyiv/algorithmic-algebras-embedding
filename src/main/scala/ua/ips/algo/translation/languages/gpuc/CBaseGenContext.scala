@@ -7,7 +7,7 @@ import ua.ips.algo._
 import ua.ips.algo.translation._
 
 
-class CBasePrintContext {
+class CBaseGenContext(val irCtx: IRContext) {
 
    val includes: ArrayBuffer[String] = ArrayBuffer()
 

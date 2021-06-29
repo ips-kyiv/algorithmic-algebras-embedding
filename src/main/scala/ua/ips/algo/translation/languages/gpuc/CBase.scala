@@ -60,23 +60,23 @@ trait CBase extends Language {
     new PrintWriter(bf)
     
 
-  def genMainNode(ctx: IRContext): TranslationUnit = {
-     val printContext = CBasePrintContext()
-     val stdDecls = genStandardDeclarations(ctx,printContext)
-     val mainDecl = genMainDeclaration(ctx, printContext) 
+  def genMainNode(irCtx: IRContext): TranslationUnit = {
+     val ctx = CBaseGenContext(irCtx)
+     val stdDecls = genStandardDeclarations(ctx)
+     val mainDecl = genMainDeclaration(ctx) 
      val mainDecls: List[ExternalDeclaration] = List(mainDecl)
-     val prototypes: List[ExternalDeclaration] = printContext.functionPrototypes.toList
-     val defintions: List[ExternalDeclaration] = printContext.functionDefinitions.toList
+     val prototypes: List[ExternalDeclaration] = ctx.functionPrototypes.toList
+     val defintions: List[ExternalDeclaration] = ctx.functionDefinitions.toList
      TranslationUnit(
        stdDecls ++ prototypes ++ mainDecls ++ defintions  
      )
   }
 
-  def genStandardDeclarations(irCtx: IRContext, pCtx: CBasePrintContext): List[ExternalDeclaration] = {
+  def genStandardDeclarations(ctx: CBaseGenContext): List[ExternalDeclaration] = {
     List.empty
   }
 
-  def genMainDeclaration(ctx: IRContext, pCtx: CBasePrintContext): ExternalDeclaration = {
+  def genMainDeclaration(ctx: CBaseGenContext): ExternalDeclaration = {
      FunctionDefinition(specifiers=List.empty, //: List[DeclarationSpecifier], 
             declarator = Declarator(None, 
               FunctionDirectDeclarator(
@@ -85,23 +85,23 @@ trait CBase extends Language {
               )
             ), 
             declarations = List.empty, //: List[Declaration],  TODO: vars
-            body = genCompoundStatement(ctx, pCtx: CBasePrintContext,  ctx.rootNode)
+            body = genCompoundStatement(ctx,  ctx.irCtx.rootNode)
       ) 
   }
 
-  def genCompoundStatement(irCtx: IRContext, pCtx: CBasePrintContext, node: IRNode): CompoundStatement = {
+  def genCompoundStatement(ctx: CBaseGenContext, node: IRNode): CompoundStatement = {
     node match
       case SeqIRNode(id,schema,childs) =>
-          CompoundStatement(childs.flatMap(x => genBlockItems(irCtx, pCtx, x)).toList)
-      case ParIRNode(id,schema,childs) =>
+          CompoundStatement(childs.flatMap(x => genBlockItems(ctx, x)).toList)
+      case ParIRNode(id,schema,childs) =>  
           // extract each of parallel to function.
           // variabes are passed by pointers.
           val count = childs.length
-          val (barrierDecl, barrierName) = genBarrierInit(id, pCtx, count)
+          val (barrierDecl, barrierName) = genBarrierInit(id, ctx, count)
           val submitFunctionCalls: List[BlockItem] = childs.zipWithIndex.flatMap{
-            (c, i) => genParFunctionSubmit(irCtx,pCtx, c,  barrierName)
+            (c, i) => genParFunctionSubmit(ctx, c,  barrierName)
           }.toList
-          val barrierAwaitCall = genBarrierAwaitCall(barrierName, pCtx)
+          val barrierAwaitCall = genBarrierAwaitCall(barrierName, ctx)
           val barrierDecls: List[BlockItem] = List(barrierDecl)
           CompoundStatement( barrierDecls ++ submitFunctionCalls ++ List(barrierAwaitCall))
       case e: EmptyIRNode => CompoundStatement(List())
@@ -114,57 +114,57 @@ trait CBase extends Language {
   /**
    * create in context definition and prototype and generate function call submitted.
    **/
-  def genParFunctionSubmit(irCtx: IRContext, pCtx: CBasePrintContext, node: IRNode, barrierName: String): List[Statement] = {
+  def genParFunctionSubmit(ctx: CBaseGenContext, node: IRNode, barrierName: String): List[Statement] = {
     println(s"genParFunctioNSubmit is not implemented for ${node}")
     ???
   }
 
-  def genBarrierInit(id: String, pCtx: CBasePrintContext, count: Int): (Declaration, String) =
+  def genBarrierInit(id: String, ctx: CBaseGenContext, count: Int): (Declaration, String) =
     ???
 
-  def genBarrierAwaitCall(barrierName: String, pCtx: CBasePrintContext): Statement =
+  def genBarrierAwaitCall(barrierName: String, ctx: CBaseGenContext): Statement =
     ???
 
-  def genBlockItems(irCtx: IRContext, pCtx: CBasePrintContext, node: IRNode): List[BlockItem] =
+  def genBlockItems(ctx: CBaseGenContext, node: IRNode): List[BlockItem] =
     node match
-      case seqNode: SeqIRNode => List(genCompoundStatement(irCtx, pCtx, seqNode))
-      case parSeqNode: ParIRNode => List(genCompoundStatement(irCtx, pCtx, parSeqNode))
+      case seqNode: SeqIRNode => List(genCompoundStatement(ctx, seqNode))
+      case parSeqNode: ParIRNode => List(genCompoundStatement(ctx, parSeqNode))
       case inputs@IRInputs(id, schema, childs) =>
-        childs.flatMap(x => genBlockItems(irCtx,pCtx,x)).toList
+        childs.flatMap(x => genBlockItems(ctx,x)).toList
       case v@IRVar(id, schema, name, init) =>
-        List(genVariableDeclaration(irCtx, pCtx, name, init.origin))
+        List(genVariableDeclaration(ctx, name, init.origin))
       case IROutput(id,schema, expr) =>
-        val outputCall = FunctionCallExpression(Identifier("output"), List(genPrecAssigmentExpression(irCtx, pCtx, expr)) )
+        val outputCall = FunctionCallExpression(Identifier("output"), List(genPrecAssigmentExpression(ctx, expr)) )
         List(ExpressionStatement(outputCall))
       case _ =>
         println(s"genBlockItem is not implemented for ${node}")
         ???  
   
-  def genVariableDeclaration(irCtx: IRContext, pCtx: CBasePrintContext, name: String, init: DataExpression): Declaration = 
+  def genVariableDeclaration(ctx: CBaseGenContext, name: String, init: DataExpression): Declaration = 
       init.sort match 
         case basicSort: BasicDataSort =>
-          genBasicVariableDeclaration(irCtx, pCtx, name, basicSort, init)
+          genBasicVariableDeclaration(ctx, name, basicSort, init)
         case arrSort: FixedArrayDataSort[_] =>
-          genArrayVariableDeclaration(irCtx, pCtx, name, arrSort, init)
+          genArrayVariableDeclaration(ctx, name, arrSort, init)
         case _ => 
           println(s"variable declaraor for sort ${init.sort} is not implemented yet");
           ???
 
-  def genBasicVariableDeclaration(irCtx: IRContext, pCtx: CBasePrintContext, name: String, 
+  def genBasicVariableDeclaration(ctx: CBaseGenContext, name: String, 
                                    sort: BasicDataSort, init: DataExpression): Declaration =
-      val specifiers: List[DeclarationSpecifier] = genTypeSpecifiers(irCtx,pCtx,init.sort)
+      val specifiers: List[DeclarationSpecifier] = genTypeSpecifiers(ctx,init.sort)
       val baseDeclarator = IdentifierDeclarator(Identifier(name))
       val decl: Declarator = Declarator(None, baseDeclarator)
-      val initializer = genPrecAssigmentExpression(irCtx, pCtx, init)
+      val initializer = genPrecAssigmentExpression(ctx, init)
       val initDeclarator: InitDeclarator = InitDeclarator(decl, Some(initializer))
       Declaration(specifiers, List(initDeclarator))
       
 
-  def genArrayVariableDeclaration(irCtx: IRContext, pCtx: CBasePrintContext, name: String,
+  def genArrayVariableDeclaration(ctx: CBaseGenContext, name: String,
                                   sort: FixedArrayDataSort[_], init: DataExpression): Declaration = ???
 
 
-  def genTypeSpecifiers(irCtx: IRContext, pCtx: CBasePrintContext, sort: DataSort): List[DeclarationSpecifier] =
+  def genTypeSpecifiers(ctx: CBaseGenContext, sort: DataSort): List[DeclarationSpecifier] =
     sort match
       case BasicDataSort(name) =>
         name match
@@ -175,32 +175,32 @@ trait CBase extends Language {
           case _ =>
             throw new IllegalArgumentException(s"Unsupported basic sort: $name")
       case FixedArrayDataSort(length, baseSort) =>
-          val baseDeclarations = genTypeSpecifiers(irCtx,pCtx, baseSort)
+          val baseDeclarations = genTypeSpecifiers(ctx, baseSort)
           ???
           // can't without direct clarator.
       case _ =>
         println(s"sort is not supported yet for C: $sort")
         ???    
 
-  def genAssigment(irCtx: IRContext, pCtx: CBasePrintContext, name: String, expr: DataExpression): AssigmentExpression = 
+  def genAssigment(ctx: CBaseGenContext, name: String, expr: DataExpression): AssigmentExpression = 
     AssigmentExpression(
       AssignmentOperator.ASSIGN,
       Identifier(name),
-      genPrecAssigmentExpression(irCtx, pCtx, expr)
+      genPrecAssigmentExpression(ctx, expr)
     )
 
-  def genExpression(irCtx: IRContext, pCtx: CBasePrintContext, expr: DataExpression): Expression = 
+  def genExpression(ctx: CBaseGenContext, expr: DataExpression): Expression = 
       expr match
         case DataAccessExpression(name, sort) =>
           // TODO: find var ?
           Identifier(name)
         case FunctionalExpression(signature, args) =>
           if (isSpecialSignature(signature)) then
-            SpecialFunctionalExpression(signature, args.map(a => genPrecAssigmentExpression(irCtx,pCtx,a)).toList  )
+            SpecialFunctionalExpression(signature, args.map(a => genPrecAssigmentExpression(ctx,a)).toList  )
           else
-            FunctionCallExpression(Identifier(signature.name), args.map(a => genPrecAssigmentExpression(irCtx, pCtx, a)).toList )
+            FunctionCallExpression(Identifier(signature.name), args.map(a => genPrecAssigmentExpression(ctx, a)).toList )
         case ConstantExpression(name, value) =>
-            generateConstantExpression(irCtx, pCtx, name, value)
+            generateConstantExpression(ctx, name, value)
         case DataInputExpression(name, sort, index) =>
           sort match
             case BasicDataSort(sortName) =>
@@ -208,8 +208,8 @@ trait CBase extends Language {
             case _ =>
               ???
 
-  def genPrecAssigmentExpression(irCtx: IRContext, pCtx: CBasePrintContext, expr: DataExpression): PrecAssigmentExpression =
-    genExpression(irCtx, pCtx, expr) match
+  def genPrecAssigmentExpression(ctx: CBaseGenContext, expr: DataExpression): PrecAssigmentExpression =
+    genExpression(ctx, expr) match
       case e: PrecAssigmentExpression => e
       case other => WrappedExpression(other)
 
@@ -246,7 +246,7 @@ trait CBase extends Language {
       case _ => WrappedExpression(expr)
 
 
-  def generateConstantExpression(irCtx: IRContext, pCtx: CBasePrintContext, sort: DataSort, value: String): Expression =
+  def generateConstantExpression(vtx: CBaseGenContext, sort: DataSort, value: String): Expression =
     sort match
       case BasicDataSort(sortName) =>
         sortName match
