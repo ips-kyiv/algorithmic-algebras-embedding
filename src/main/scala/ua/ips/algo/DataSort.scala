@@ -17,6 +17,13 @@ case class NamedSet(elements: Map[String,DataSort]) extends DataSort:
               elements.toSeq.map(x => Expr.ofTupleFromSeq(Seq(Expr(x._1),x._2.lift)).asExprOf[(String,DataSort)])
         )}.toMap ) }
 
+enum TensorDataSortFlawor:
+      case Dence, Diagonal, AllSame   
+     
+case class TensorDataSort[E](element: DataSort, flawor: TensorDataSortFlawor)
+     
+
+
 trait DataSortRep[T]:
    
    def dataSort: DataSort
@@ -78,8 +85,9 @@ given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): DataSortRe
    Cartesian2Rep(a,b)
 
 
-case class FixedArrayDataSort[E](length:Int, element:DataSort) extends DataSortRep[Array[E]]:
+case class FixedArrayDataSortRep[E](length:Int, element:DataSort) extends DataSortRep[Array[E]]:
 
    val dataSort: DataSort = Cartesian(IndexedSeq.fill(length)(element))
 
+ 
 
