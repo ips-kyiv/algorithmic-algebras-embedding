@@ -1,6 +1,10 @@
 package ua.ips.algo
 
-import scala.quoted._
+import ua.ips.algo.runtime.*
+
+import scala.compiletime.*
+import scala.quoted.*
+
 
 sealed trait DataSort:
   def lift(using Quotes): Expr[DataSort]
@@ -90,9 +94,19 @@ given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): DataSortRe
    Cartesian2Rep(a,b)
 
 
-case class FixedArrayDataSortRep[E](length:Int, element:DataSort) extends DataSortRep[Array[E]]:
+case class FixedArrayDataSortRep[E, N <:Int](length:N, element:DataSort) extends DataSortRep[FixedArray[E,N]]:
 
-   val dataSort: DataSort = Cartesian(IndexedSeq.fill(length)(element))
+   //val dataSort: DataSort = Cartesian(IndexedSeq.fill(length)(element))
+   val dataSort: DataSort = FixedArrayDataSort(length, element)
+
+inline given FixedArray2Rep[E,N <: Int](using e: DataSortRep[E]): DataSortRep[FixedArray[E,N]] =
+
+   inline constValueOpt[N] match
+      case Some(n) => FixedArrayDataSortRep(n, e.dataSort)
+      case None => error("N is not a const-value")
+
+// case class Tensor1DataSort[E]
 
  
+
 
