@@ -28,8 +28,20 @@ case class FixedArrayDataSort(length: Int, element: DataSort) extends DataSort:
 
 enum TensorDataSortFlawor:
       case Dence, Diagonal, AllSame   
+
+//TODO: submit feature request to dotty      
+given ToExpr[TensorDataSortFlawor] with
+      def apply(x: TensorDataSortFlawor)(using Quotes): Expr[TensorDataSortFlawor] =
+         x match
+            case TensorDataSortFlawor.Dence => '{ TensorDataSortFlawor.Dence }
+            case TensorDataSortFlawor.Diagonal => '{ TensorDataSortFlawor.Diagonal }
+            case TensorDataSortFlawor.AllSame => '{ TensorDataSortFlawor.AllSame }
+         
+         
      
-case class TensorDataSort[E](element: DataSort, flawor: TensorDataSortFlawor)
+case class TensorDataSort[E](element: DataSort, flawor: TensorDataSortFlawor) extends DataSort:
+   def lift(using Quotes): Expr[DataSort] =
+      '{ TensorDataSort( ${element.lift}, ${Expr(flawor)} ) }
      
 
 
@@ -100,12 +112,14 @@ case class FixedArrayDataSortRep[E, N <:Int](length:N, element:DataSort) extends
    val dataSort: DataSort = FixedArrayDataSort(length, element)
 
 inline given FixedArray2Rep[E,N <: Int](using e: DataSortRep[E]): DataSortRep[FixedArray[E,N]] =
-
    inline constValueOpt[N] match
       case Some(n) => FixedArrayDataSortRep(n, e.dataSort)
       case None => error("N is not a const-value")
 
-// case class Tensor1DataSort[E]
+
+given Tensor1DataSortRep[E](using e:DataSortRep[E]): DataSortRep[Array[E]] with
+     val  dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
+
 
  
 
