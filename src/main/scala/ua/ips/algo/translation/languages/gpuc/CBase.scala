@@ -144,7 +144,7 @@ trait CBase extends Language {
       init.sort match 
         case basicSort: BasicDataSort =>
           genBasicVariableDeclaration(ctx, name, basicSort, init)
-        case arrSort: FixedArrayDataSort[_] =>
+        case arrSort: FixedArrayDataSort =>
           genArrayVariableDeclaration(ctx, name, arrSort, init)
         case _ => 
           println(s"variable declaraor for sort ${init.sort} is not implemented yet");
@@ -161,7 +161,7 @@ trait CBase extends Language {
       
 
   def genArrayVariableDeclaration(ctx: CBaseGenContext, name: String,
-                                  sort: FixedArrayDataSort[_], init: DataExpression): Declaration = ???
+                                  sort: FixedArrayDataSort, init: DataExpression): Declaration = ???
 
 
   def genTypeSpecifiers(ctx: CBaseGenContext, sort: DataSort): List[DeclarationSpecifier] =
