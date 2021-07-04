@@ -12,8 +12,9 @@ lazy val root = project
 
     //scalacOptions ++= Seq( "-unchecked"),
     Compile / doc / scalacOptions := Seq("-groups",
-                "-source-links:aae=github://ips-kyiv/algorithmic-algebras-embedding/master",
-                "-siteroot", "docs"),
+                "-source-links:github://ips-kyiv/algorithmic-algebras-embedding/master",
+                "-siteroot","docs"
+                ),
     libraryDependencies += "org.scala-lang" %% "scala3-staging" % dottyVersion,
     libraryDependencies += "com.github.scopt" %% "scopt" % "4.0.1",
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.26" % Test,
