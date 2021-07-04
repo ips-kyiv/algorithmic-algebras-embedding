@@ -117,9 +117,7 @@ inline given FixedArray2Rep[E,N <: Int](using e: DataSortRep[E]): DataSortRep[Fi
       case None => error("N is not a const-value")
 
 
-given Tensor1DataSortRep[E](using e:DataSortRep[E]): DataSortRep[Array[E]] with
-     val  dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
-
+ 
 
  
 
