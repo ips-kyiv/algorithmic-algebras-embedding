@@ -17,6 +17,11 @@ case class NamedSet(elements: Map[String,DataSort]) extends DataSort:
               elements.toSeq.map(x => Expr.ofTupleFromSeq(Seq(Expr(x._1),x._2.lift)).asExprOf[(String,DataSort)])
         )}.toMap ) }
 
+case class FixedArrayDataSort(length: Int, element: DataSort) extends DataSort:
+   def lift(using Quotes): Expr[DataSort] =
+      '{  FixedArrayDataSort( ${Expr(length)} , ${element.lift} ) }
+
+
 enum TensorDataSortFlawor:
       case Dence, Diagonal, AllSame   
      
