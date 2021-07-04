@@ -58,6 +58,14 @@
      ...
    }
 ```
+* Condition:
+  * Scala representation: conditional statement
+```
+    if condition then
+      ifTrue
+    else
+      ifFalse
+```
 * Conditional iteration
   * Scala representation: while loop
 ```
