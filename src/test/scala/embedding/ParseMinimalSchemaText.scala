@@ -70,16 +70,16 @@ class ParseMinimalSchemaTest extends FunSuite {
     println(schema)
   }
 
-  test("minArray".fail) {
-    var schema = Schema.build{
-      (arr: Array[Int]) => 
-        var min = Int.MaxValue
-        for (v <- arr){
-          if (v < min){
-            min = v
-          }
-        }
-    }
-    println(schema)
-  }
+  // test("minArray") {
+  //     var schema = Schema.build{
+  //     (arr: Array[Int]) => 
+  //       var min = Int.MaxValue
+  //       for (v <- arr){
+  //         if (v < min){
+  //           min = v
+  //         }
+  //       }
+  //     }
+  //     println(schema)
+  // }
 }
