@@ -38,7 +38,13 @@ object SchemaToC {
     val moduleField = objClass.getField("MODULE$")
     val obj = moduleField.get(null).asInstanceOf[SchemaProvider]
     val schema = obj.defaultSchema
-    val outputBundle = transpiler.compile(schema)
+    val nameComponents = name.split(".")
+    val packageName =  if (nameComponents.length > 1) then {
+       nameComponents.slice(0, nameComponents.length - 1).toIndexedSeq
+    } else Seq()
+    val schemaName = nameComponents(nameComponents.length - 1);
+    val module = SchemaModule(packageName, schemaName, schema)
+    val outputBundle = transpiler.compile(module)
     transpiler.target.language.write(outputBundle, config.outputDir)
   }
 

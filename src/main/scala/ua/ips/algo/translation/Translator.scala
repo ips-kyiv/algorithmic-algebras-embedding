@@ -9,15 +9,15 @@ class Translator(val target: Target)
    // TODO: may-be tree.
    val optimizations: Seq[IROptimizationPhase] = Seq.empty
 
-   def compile(input: Schema): target.language.OutputBundle =
+   def compile(input: SchemaModule): target.language.OutputBundle =
       println("Translator Input: "+input)
       val optimized = optimize(input)
       codeGen(optimized)
       
    
-   def optimize(input: Schema): IRContext =
-      var ctx = new IRContext(target)
-      val irNode = IRNode.accept(ctx,input,ctx.rootId)
+   def optimize(input: SchemaModule): IRContext =
+      var ctx = new IRContext(target, input.packageName :+ input.name )
+      val irNode = IRNode.accept(ctx,input.schema,ctx.rootId)
       println("IRNode: "+ irNode)
       println("ctx root before optimize: " + ctx.rootNode)
       // TODO: 

@@ -27,6 +27,7 @@ case object Whitespace extends PrintToken
 case object EmptyPrint extends PrintToken
 
 
+
 case class PrintState(
    prevState: Option[PrintState],
    printed: IndexedSeq[PrintToken],
@@ -558,13 +559,6 @@ given Printer[ParameterDeclaration] with
            .print(data.declarator)
           
 
-given Printer[ParameterDeclarator] with
-    def print(data: ParameterDeclarator, state: PrintState) =
-      data match
-        case x:AbstractDeclarator => summon[Printer[AbstractDeclarator]].print(x,state)
-        case x:Declarator => summon[Printer[Declarator]].print(x,state)
-
-
 
 given Printer[InitDeclarator] with
     
@@ -581,7 +575,7 @@ given Printer[CompoundStatement] with
    def print(data:CompoundStatement, state: PrintState) =
       val s1 = state.addSmallBlock("{").startBlock()
       val s2 = data.items.foldLeft(s1) { (s,e) =>
-          s.print(e).addSmallBlock(";").addNewLine()
+            s.print(e).addSmallBlock(";").addNewLine()
       }
       s2.finishBlock().addSmallBlock("}").addNewLine()
 
@@ -1025,6 +1019,36 @@ given Printer[AsmStatement] with
         .addSmallBlock(")")
         .addSmallBlock(";")
 
+given Printer[StringLob] with
+  def print(data: StringLob, state: PrintState) =
+    val chars = data.value.toCharArray
+    var i = 0
+    var nLines = 0
+    var maxNCols = 0;
+    var cCol = 0; 
+    while(i < chars.length) {
+      val c = chars(i)
+      if (c == '\n') {
+         nLines = nLines + 1
+         if (cCol > maxNCols) {
+           maxNCols = cCol
+         } 
+         cCol = 0
+      } else {
+        if (nLines == 0 && cCol == 0) {
+           nLines = 1
+        }
+        cCol = cCol + 1
+      }
+      i = i + 1
+    }
+    val block = PrintBlock(
+          startCol = 0,
+          nCols = maxNCols,
+          nLines = nLines,
+          value = data.value
+    )
+    state.add(block)
 
 
 

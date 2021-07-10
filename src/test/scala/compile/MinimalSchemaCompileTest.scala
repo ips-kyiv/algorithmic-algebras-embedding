@@ -14,7 +14,8 @@ class MinimalSchemaCompileTest extends FunSuite:
     }
     println(schema)
     val translator = SchemaToC(Schema2CConfig())
-    val outputBundle = translator.compile(schema)
+    val schemaModule = SchemaModule(Seq(),"testmin", schema)
+    val outputBundle = translator.compile(schemaModule)
     translator.target.language.write(outputBundle, "testdata/compiletest1")
     assert(true)
 

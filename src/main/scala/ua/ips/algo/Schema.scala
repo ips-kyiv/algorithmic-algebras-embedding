@@ -60,7 +60,6 @@ case class AssertSchema(cond: Condition) extends Schema:
 
 
 
-//
 case class InputSchema(parameters: Seq[InputSchema.Entry]) extends Schema:
   def lift(using Quotes): Expr[Schema] = '{ InputSchema(${Expr.ofSeq(parameters.map(_.lift))}) }
 

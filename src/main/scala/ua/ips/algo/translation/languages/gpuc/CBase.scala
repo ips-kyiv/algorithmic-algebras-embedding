@@ -14,12 +14,18 @@ trait CBase extends Language {
 
   def genContext(ctx: IRContext): OutputBundle = 
     {
-      val name = "Main.c"
-      val ast = genMainNode(ctx)
+      val name = generateName(ctx.fullName)
+      val ast = genMainNode(ctx, name)
+
       println(s"ast: $ast" )
-      OutputBundle("output",Map(name -> ast))
+      OutputBundle("output",
+        Map(
+           s"${name}.c" -> ast,
+           "CMakeLists.txt" ->  TranslationUnit(List(CMakeGen.lib(name)))
+      ))
     }
   
+
   // yet not implemented
   val baseInterpretation: Interpretation = FreeInterpretation 
 
@@ -59,11 +65,14 @@ trait CBase extends Language {
     val bf = Files.newBufferedWriter(nPath,StandardOpenOption.CREATE,StandardOpenOption.TRUNCATE_EXISTING)
     new PrintWriter(bf)
     
+  def generateName(fullName: Seq[String]): String =
+    // for now - le't d
+    fullName.mkString
 
-  def genMainNode(irCtx: IRContext): TranslationUnit = {
+  def genMainNode(irCtx: IRContext, name:String): TranslationUnit = {
      val ctx = CBaseGenContext(irCtx)
      val stdDecls = genStandardDeclarations(ctx)
-     val mainDecl = genMainDeclaration(ctx) 
+     val mainDecl = genMainDeclaration(ctx, name) 
      val mainDecls: List[ExternalDeclaration] = List(mainDecl)
      val prototypes: List[ExternalDeclaration] = ctx.functionPrototypes.toList
      val defintions: List[ExternalDeclaration] = ctx.functionDefinitions.toList
@@ -76,12 +85,16 @@ trait CBase extends Language {
     List.empty
   }
 
-  def genMainDeclaration(ctx: CBaseGenContext): ExternalDeclaration = {
-     FunctionDefinition(specifiers=List.empty, //: List[DeclarationSpecifier], 
+  def genMainDeclaration(ctx: CBaseGenContext, name: String): ExternalDeclaration = {
+     val parameters = ctx.irCtx.inputParams.flatMap(_.inputs).map(v =>
+        ParameterDeclaration( genIVarSpecifiers(ctx, v), Declarator(None, IdentifierDeclarator(Identifier(v.name))) )
+     ).toList
+     val returnTypeSpecifiers = genTypeSpecifiers(ctx,ctx.irCtx.outputs(0).expr.sort) 
+     FunctionDefinition(specifiers=returnTypeSpecifiers, //: List[DeclarationSpecifier], 
             declarator = Declarator(None, 
               FunctionDirectDeclarator(
-                Identifier("main"),
-                ParameterTypeList(List.empty, false)  // TODO:  generate params for char** args
+                Identifier(name),
+                ParameterTypeList(parameters, false) 
               )
             ), 
             declarations = List.empty, //: List[Declaration],  TODO: vars
@@ -111,6 +124,11 @@ trait CBase extends Language {
 
   }
 
+  def genIVarSpecifiers(ctx: CBaseGenContext, v: IRVar): List[SpecifierQualifier] =
+      genTypeSpecifiers(ctx, v.init.origin.sort)
+      
+
+
   /**
    * create in context definition and prototype and generate function call submitted.
    **/
@@ -130,12 +148,16 @@ trait CBase extends Language {
       case seqNode: SeqIRNode => List(genCompoundStatement(ctx, seqNode))
       case parSeqNode: ParIRNode => List(genCompoundStatement(ctx, parSeqNode))
       case inputs@IRInputs(id, schema, childs) =>
-        childs.flatMap(x => genBlockItems(ctx,x)).toList
+        // inputs now are printed in the function def, so = skip.
+        // childs.flatMap(x => genBlockItems(ctx,x)).toList
+        List.empty
       case v@IRVar(id, schema, name, init) =>
         List(genVariableDeclaration(ctx, name, init.origin))
       case IROutput(id,schema, expr) =>
-        val outputCall = FunctionCallExpression(Identifier("output"), List(genPrecAssigmentExpression(ctx, expr)) )
-        List(ExpressionStatement(outputCall))
+        //val outputCall = FunctionCallExpression(Identifier("output"), List(genPrecAssigmentExpression(ctx, expr)) )
+        val cExpr = genPrecAssigmentExpression(ctx, expr)
+        //List(ExpressionStatement(outputCall))
+        List(Return(Some(cExpr)))
       case _ =>
         println(s"genBlockItem is not implemented for ${node}")
         ???  
@@ -164,7 +186,7 @@ trait CBase extends Language {
                                   sort: FixedArrayDataSort, init: DataExpression): Declaration = ???
 
 
-  def genTypeSpecifiers(ctx: CBaseGenContext, sort: DataSort): List[DeclarationSpecifier] =
+  def genTypeSpecifiers(ctx: CBaseGenContext, sort: DataSort): List[SpecifierQualifier] =
     sort match
       case BasicDataSort(name) =>
         name match

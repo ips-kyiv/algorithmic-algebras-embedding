@@ -3,7 +3,7 @@ package ua.ips.algo.translation
 import ua.ips.algo._
 
 /**
-* schema with additional
+* schema with additional data.
 **/
 sealed trait IRNode{
   def  id: String;
@@ -12,7 +12,6 @@ sealed trait IRNode{
 
   def  subnode(ids: Seq[String]): Option[IRNode]
   
-
   //def  cfNext(ctx: IRContex): Set[IRNode];
   //def  cfPrev(ctx: IRContex): Set[IRNode];
   //def  isVar: Boolean;
@@ -71,6 +70,7 @@ case class SeqIRNode(id: String,
  
     def subnode(names: Seq[String]): Option[IRNode] =
       IRNode.indexSubnode(this, internalNodes, names)
+
         
 }
 
@@ -210,7 +210,9 @@ object IRInputs:
           val dataExpression = DataInputExpression(p.variable, p.sort, i)
           IRVar(id,None,p.variable, IRDataExpression(s"${id}.right", dataExpression))
       ).toIndexedSeq
-      IRInputs(inputsId, Some(schema), irParams)
+      val r = IRInputs(inputsId, Some(schema), irParams)
+      ctx.inputParams.append(r)
+      r
 
 
 case class IROutput(
@@ -226,7 +228,9 @@ case class IROutput(
 object IROutput:
 
    def create(ctx: IRContext, schema: OutputSchema,  rootPath: String): IROutput =
-      IROutput(rootPath, Some(schema), schema.expr)
+      val r = IROutput(rootPath, Some(schema), schema.expr)
+      ctx.outputs.append(r)
+      r
 
 
 

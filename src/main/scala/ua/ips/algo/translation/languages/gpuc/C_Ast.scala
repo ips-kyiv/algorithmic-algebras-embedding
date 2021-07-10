@@ -167,11 +167,11 @@ case class IndexDesignator(expression: Expression) extends Designator
 case class DotDesignator(identifier: Identifier) extends Designator
 
 case class Declarator(pointer: Option[Pointer],
-                      base: DirectDeclarator) extends StructDeclarator with ParameterDeclarator
+                      base: DirectDeclarator) extends StructDeclarator 
 
 case class TypeName(specifiers: List[SpecifierQualifier], declarator: Option[AbstractDeclarator])
 
-sealed trait AbstractDeclarator extends ParameterDeclarator
+sealed trait AbstractDeclarator 
 case class Pointer( typeQual: List[TypeQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
 sealed trait DirectDeclarator
 case class IdentifierDeclarator(id: Identifier) extends DirectDeclarator
@@ -270,11 +270,11 @@ case class BitFieldDeclarator(base: Declarator, bits: Expression) extends Struct
 
 case class ParameterTypeList(parameters: List[ParameterDeclaration], withVarargs: Boolean)
 
-case class ParameterDeclaration(specifiers: List[DeclarationSpecifier], declarator: ParameterDeclarator)
+case class ParameterDeclaration(specifiers: List[DeclarationSpecifier], declarator: Declarator)
 
-sealed trait ParameterDeclarator
+//sealed trait ParameterDeclarator
 
-sealed trait BlockItem
+sealed trait BlockItem 
 
 sealed trait Statement extends BlockItem
 
@@ -332,6 +332,10 @@ case class TranslationUnit(declarations: List[ExternalDeclaration])
 
 sealed trait ExternalDeclaration
 
+/**
+* Pseudo-object wich actualy present not C text, but other
+**/
+case class StringLob(value:String) extends ExternalDeclaration
 
 
 
