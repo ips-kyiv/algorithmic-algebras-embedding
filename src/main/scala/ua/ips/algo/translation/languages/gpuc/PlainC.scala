@@ -7,3 +7,7 @@ object PlainC extends CBase {
 
   
 }
+
+object CwithOpenCL extends CBase with OpenCL {
+  
+}

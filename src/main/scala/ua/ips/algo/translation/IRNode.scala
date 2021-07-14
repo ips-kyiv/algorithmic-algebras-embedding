@@ -208,7 +208,7 @@ object IRInputs:
       val irParams = schema.parameters.zipWithIndex.map( (p,i) =>
           val id = s"${inputsId}.${p.variable}"
           val dataExpression = DataInputExpression(p.variable, p.sort, i)
-          IRVar(id,None,p.variable, IRDataExpression(s"${id}.right", dataExpression))
+          IRVar(id,None,p.variable, IRDataExpressionOrigin(s"${id}.right", dataExpression))
       ).toIndexedSeq
       val r = IRInputs(inputsId, Some(schema), irParams)
       ctx.inputParams.append(r)

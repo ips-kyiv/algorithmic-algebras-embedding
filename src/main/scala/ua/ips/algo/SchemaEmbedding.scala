@@ -51,7 +51,8 @@ class SchemaEmbedding(using val qctx: Quotes) {
 
   def findDataSort(tp: TypeRepr, posExpr: Expr[_]): Expr[DataSort] = 
     tp.widen.asType match
-      case '[t] => Expr.summon[DataSortRep[t]] match
+      case '[t] =>
+               Expr.summon[DataSortRep[t]] match
                       case Some(r) => '{ $r.dataSort }
                       case None => 
                            throw SchemaCompileException(s"Can't find DataSortRep for ${tp.show}", posExpr)

@@ -56,7 +56,7 @@ trait DataSortRep[T]:
         interpretation.constant(value, this)
 
 
-trait BasicDataSortRep[T] extends DataSortRep[T] {
+trait BasicDataSortRep[T <: Matchable] extends DataSortRep[T] {
 
    def name: String
 
@@ -97,12 +97,12 @@ object DoubleBasicRep extends BasicDataSortRep[Double] {
 given DataSortRep[Double] = DoubleBasicRep
 
 
-case class Cartesian2Rep[A,B](a: DataSortRep[A], b: DataSortRep[B]) extends DataSortRep[(A,B)]:
+case class Cartesian2Rep[A <: Matchable,B <: Matchable](a: DataSortRep[A], b: DataSortRep[B]) extends DataSortRep[(A,B)]:
 
    val dataSort: DataSort = Cartesian(IndexedSeq(a.dataSort, b.dataSort))
 
 
-given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): DataSortRep[(A,B)] =
+given cartesian2Rep[A <: Matchable,B <: Matchable](using a: DataSortRep[A], b: DataSortRep[B]): DataSortRep[(A,B)] =
    Cartesian2Rep(a,b)
 
 
@@ -111,10 +111,10 @@ case class FixedArrayDataSortRep[E, N <:Int](length:N, element:DataSort) extends
    //val dataSort: DataSort = Cartesian(IndexedSeq.fill(length)(element))
    val dataSort: DataSort = FixedArrayDataSort(length, element)
 
-inline given FixedArray2Rep[E,N <: Int](using e: DataSortRep[E]): DataSortRep[FixedArray[E,N]] =
+inline given FixedArray2Rep[E <: Matchable,N <: Int](using e: DataSortRep[E]): DataSortRep[FixedArray[E,N]] =
    inline constValueOpt[N] match
       case Some(n) => FixedArrayDataSortRep(n, e.dataSort)
       case None => error("N is not a const-value")
 
-given Tensor1DataSortRep[E](using e:DataSortRep[E]): DataSortRep[Array[E]] with
+given Tensor1DataSortRep[E <: Matchable](using e:DataSortRep[E]): DataSortRep[Array[E]] with
    val  dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)

@@ -5,7 +5,7 @@ import ua.ips.algo.translation._
 
 
 
-object CUDAC extends CBase {
+trait CUDAC extends CBase {
 
   
 }

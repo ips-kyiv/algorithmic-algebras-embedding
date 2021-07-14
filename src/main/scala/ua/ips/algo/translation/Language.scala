@@ -15,7 +15,7 @@ trait Language {
 
   def dataSortDef(dataSort: DataSort): AstDef
 
-  def constantDef(item: baseInterpretation.DataItem): AstDef
+  def constantDef(item: baseInterpretation.DataItem, sort: DataSort): AstDef
 
   def signatureDef(items: Seq[AstDef]): AstDef
   

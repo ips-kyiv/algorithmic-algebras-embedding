@@ -3,11 +3,7 @@ package ua.ips.algo
 
 trait Interpretation {
 
-  trait DataItemType {
-     def dataSort: DataSort;
-  }
-
-  type DataItem <: DataItemType
+  type DataItem
 
   def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T]
 
@@ -19,12 +15,11 @@ trait Interpretation {
 }
 
 
-trait FreeInterpretation extends Interpretation {
+trait FreeInterpretation extends Interpretation { 
 
-  sealed trait FreeDataItem extends DataItemType
+  sealed trait FreeDataItem 
 
-  case class ConstantDataItem[T](override val dataSort: DataSort, value: T) 
-                                                                  extends FreeDataItem
+  case class ConstantDataItem[T](dataSort: DataSort, value: T) extends FreeDataItem
 
   case class UninterpretedFunctionDataItem(signature:DataSortSignature, 
                                            args: Seq[DataItem]) extends FreeDataItem:
