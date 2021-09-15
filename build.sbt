@@ -17,7 +17,8 @@ lazy val root = project
                 ),
     libraryDependencies += "org.scala-lang" %% "scala3-staging" % dottyVersion,
     libraryDependencies += "com.github.scopt" %% "scopt" % "4.0.1",
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.26" % Test,
+    //libraryDependencies += ("org.scalameta" %% "scalameta" % "4.4.28").cross(CrossVersion.for3Use2_13),
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.27" % Test,
     testFrameworks += new TestFramework("munit.Framework"),
     resolvers += Resolver.sbtPluginRepo("releases"),
     git.remoteRepo := "git@github.com:ips-kyiv/algorithmic-algebras-embedding.git"

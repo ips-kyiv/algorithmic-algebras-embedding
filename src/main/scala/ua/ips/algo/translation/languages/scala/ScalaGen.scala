@@ -23,7 +23,19 @@ trait ScalaGen {
   def generateName(ctx: IRContext, fullName: Seq[String]): String =
     fullName.mkString(".")
 
-  def genMainNode(ctx: IRContext, name: String): AstDef = ???
+  def genMainNode(ctx: IRContext, name: String): AstDef = {
+    ???
+    /*
+     val ctx = ScalaGenContext(irCtx)
+     val mainDecl = genMainDeclaration(ctx, name) 
+     val mainDecls: List[DefDef] = List(mainDecl)
+     val defintions: List[DefDef] = ctx.functionDefinitions.toList
+
+     TranslationUnit(
+        mainDecls ++ defintions  
+     )
+     */
+  }
 
 
 }
