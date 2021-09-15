@@ -13,7 +13,8 @@ class ScalaLanguage(using val qctx: Quotes) extends Language with ScalaGen {
 
   type Ast = Term
 
-  val baseInterpretation: ua.ips.algo.Interpretation = ScalaInterpretation(using qctx)
+
+  val baseInterpretation: ua.ips.algo.Interpretation = ??? // ScalaInterpretation(using qctx)
 
   def constantDef(item: baseInterpretation.DataItem, sort: DataSort): AstDef = ???
       
@@ -25,6 +26,6 @@ class ScalaLanguage(using val qctx: Quotes) extends Language with ScalaGen {
   def signatureDef(items: Seq[AstDef]): AstDef = ???
 
   def write(bundle:    OutputBundle, dataDir: String): Unit = ???
-  
+
 
 }
