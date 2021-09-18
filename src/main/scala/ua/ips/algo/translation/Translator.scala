@@ -21,6 +21,7 @@ class Translator(val target: Target)
       println("IRNode: "+ irNode)
       println("ctx root before optimize: " + ctx.rootNode)
       // TODO: 
+      /*
       for(phase <- optimizations) {
          val nextCtx = phase.apply(ctx);
          if !phase.mandatory && phase.applyIfBetterCostEstimation then
@@ -31,6 +32,7 @@ class Translator(val target: Target)
             ctx = nextCtx
       } 
       println("ctx root after optimize: " + ctx.rootNode) 
+       */
       ctx
 
       

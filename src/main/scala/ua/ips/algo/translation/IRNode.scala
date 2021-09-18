@@ -8,7 +8,6 @@ import ua.ips.algo._
 sealed trait IRNode{
   def  id: String;
   def  schema: Option[Schema];
-  def  costEstimations(ctx: IRContext): CostEstimations = CostEstimations.ZERO;  // TODO: implement
 
   def  subnode(ids: Seq[String]): Option[IRNode]
   
@@ -60,13 +59,6 @@ case class SeqIRNode(id: String,
                      schema: Option[Schema],
                      internalNodes: IndexedSeq[IRNode]) extends IRNode {
 
-    private var _costEstimantions: CostEstimations | Null = null
-
-    override def costEstimations(ctx: IRContext): CostEstimations =
-      if (_costEstimantions != null) then
-        _costEstimantions.nn
-      else 
-        internalNodes.foldLeft(CostEstimations.ZERO)((s,e) => s.seqMerge(e.costEstimations(ctx)))
  
     def subnode(names: Seq[String]): Option[IRNode] =
       IRNode.indexSubnode(this, internalNodes, names)
@@ -105,13 +97,6 @@ case class ParIRNode(
    internalNodes: IndexedSeq[IRNode]
  )  extends  IRNode {
 
-   private var _costEstimantions: CostEstimations | Null = null
-
-   override def costEstimations(ctx: IRContext): CostEstimations =
-    if (_costEstimantions != null) then
-      _costEstimantions.nn
-    else 
-      internalNodes.foldLeft(CostEstimations.ZERO)((s,e) => s.parMerge(e.costEstimations(ctx)))
 
    def subnode(names: Seq[String]): Option[IRNode] =
       IRNode.indexSubnode(this, internalNodes, names)
@@ -152,9 +137,6 @@ case class CondIRNode(id: String,
           case _ => None
           
           
-  override def costEstimations(ctx: IRContext): CostEstimations =
-    ifTrue.costEstimations(ctx).altMerge(ifFalse.costEstimations(ctx))
-
 
 }
 
@@ -167,7 +149,6 @@ case class EmptyIRNode(id: String) extends IRNode:
   def subnode(names: Seq[String]) =
     if (names.isEmpty) Some(this) else None
 
-  override def costEstimations(ctx: IRContext) = CostEstimations.ZERO
 
 
 case class IRVar(id: String,
@@ -178,7 +159,6 @@ case class IRVar(id: String,
   def subnode(names: Seq[String]) =
     if (names.isEmpty) Some(this) else None
 
-  override def costEstimations(ctx: IRContext) = CostEstimations.ZERO
 
 
 
