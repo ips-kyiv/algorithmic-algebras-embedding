@@ -7,18 +7,21 @@ import java.io._
 import java.nio.file._
 
 
-trait CBase extends Language {
+trait CBase  {
 
   type AstDef = TranslationUnit
 
+  case class OutputBundle1(name: String, compilationUnits:Map[String,AstDef])
 
-  def genContext(ctx: IRContext): OutputBundle = 
+  def genContext(ctx: IRContext): OutputBundle1 = 
     {
-      val name = generateName(ctx.fullName)
+      //val name = generateName(ctx.fullName)
+      val name: String = "qqq" 
       val ast = genMainNode(ctx, name)
+       
 
       println(s"ast: $ast" )
-      OutputBundle("output",
+      OutputBundle1("output",
         Map(
            s"${name}.c" -> ast,
            "CMakeLists.txt" ->  TranslationUnit(List(CMakeGen.lib(name)))
@@ -26,12 +29,8 @@ trait CBase extends Language {
     }
   
 
-  // yet not implemented
-  val baseInterpretation: Interpretation = FreeInterpretation 
+  //def dataSortDef(dataSort: DataSort): AstDef = ???
 
-  def dataSortDef(dataSort: DataSort): AstDef = ???
-
-  def constantDef(item: baseInterpretation.DataItem, sort: DataSort): AstDef = ???
 
   def signatureDef(items: Seq[AstDef]): AstDef = ???
   
@@ -39,10 +38,10 @@ trait CBase extends Language {
   //def predicateDef(): Seq[AstDef]
 
 
-  def run(bundle: OutputBundle): baseInterpretation.DataItem = ???
+  //def run(bundle: OutputBundle): baseInterpretation.DataItem = ???
 
 
-  def write(bundle: OutputBundle, dataDir: String): Unit =
+  def write(bundle: OutputBundle1, dataDir: String): Unit =
     val path = Path.of(dataDir)
     for((name,ast) <- bundle.compilationUnits) {
       val file = outputFile(path, name)
@@ -86,6 +85,7 @@ trait CBase extends Language {
   }
 
   def genMainDeclaration(ctx: CBaseGenContext, name: String): ExternalDeclaration = {
+     ???
      val parameters = ctx.irCtx.inputParams.flatMap(_.inputs).map(v =>
         ParameterDeclaration( genIVarSpecifiers(ctx, v), Declarator(None, IdentifierDeclarator(Identifier(v.name))) )
      ).toList
@@ -276,7 +276,6 @@ trait CBase extends Language {
           //case StringBasicRep.name => StringConstant(value)
           case _ => ???
       case _ => ???
-
 
 
 }
