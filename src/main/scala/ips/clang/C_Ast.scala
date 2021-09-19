@@ -36,21 +36,6 @@ case class CompoundLiteral(typeName: TypeName, initializers: List[Int]) extends 
 
 sealed trait UnaryExpression extends CastExpression
 
-case class PrefixIncrementExpression(base: UnaryExpression) extends UnaryExpression
-case class PrefixDecrementExpression(base: UnaryExpression) extends UnaryExpression
-case class UnaryOperatorExpression(op: UnaryOperator, argument: CastExpression) extends UnaryExpression
-case class SizeofConstExpression(expression: UnaryExpression) extends UnaryExpression
-case class SizeofTypeExpression(typeName: TypeName) extends UnaryExpression
-
-enum UnaryOperator(val sign: String) {   
-   case UNARY_PLUS extends UnaryOperator("+")
-   case UNARY_AMPERSAND extends UnaryOperator("&")
-   case UNARY_MULTIPLY extends UnaryOperator("*")
-   case UNARY_MINUS extends UnaryOperator("-")
-   case UNARY_INVERSE extends UnaryOperator("~")
-   case UNARY_NOT extends UnaryOperator("!")
-}
-
 
 sealed trait CastExpression extends MultiplicativeExpression
 case class Cast(typeName: TypeName, argument: CastExpression) extends CastExpression
