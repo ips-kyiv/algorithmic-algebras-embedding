@@ -3,7 +3,7 @@ package ips.clang
 
 sealed trait C_Ast
 
-sealed trait Expression extends C_Ast with ForInit
+sealed trait Expression extends C_Ast 
 
 sealed trait PrimaryExpression extends PostfixExpression
 
@@ -161,12 +161,8 @@ sealed trait BlockItem
 sealed trait Statement extends BlockItem
 
 
-sealed trait ForInit
-
-
 case class Declaration(specifiers: List[DeclarationSpecifier], 
-                       initDeclarators: List[InitDeclarator]) extends ExternalDeclaration with BlockItem
-                                                                                         with ForInit
+                       initDeclarators: List[InitDeclarator]) extends  BlockItem
 
 case class InitDeclarator(decl: Declarator, initializer: Option[PrecAssigmentExpression])
 
@@ -175,10 +171,7 @@ case class InitDeclarator(decl: Declarator, initializer: Option[PrecAssigmentExp
 case class FunctionDefinition(specifiers: List[DeclarationSpecifier], 
     declarator: Declarator, 
     declarations: List[Declaration],
-    body: Statement) extends ExternalDeclaration
+    body: Statement) 
 
 
-case class TranslationUnit(declarations: List[ExternalDeclaration])
-
-sealed trait ExternalDeclaration
 
