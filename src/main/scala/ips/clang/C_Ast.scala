@@ -151,27 +151,3 @@ case class StructComponentDeclaration(qualifiers: List[SpecifierQualifier], decl
 sealed trait DeclarationSpecifier
 
 
-case class ParameterTypeList(parameters: List[ParameterDeclaration], withVarargs: Boolean)
-
-case class ParameterDeclaration(specifiers: List[DeclarationSpecifier], declarator: Declarator)
-
-
-sealed trait BlockItem 
-
-sealed trait Statement extends BlockItem
-
-
-case class Declaration(specifiers: List[DeclarationSpecifier], 
-                       initDeclarators: List[InitDeclarator]) extends  BlockItem
-
-case class InitDeclarator(decl: Declarator, initializer: Option[PrecAssigmentExpression])
-
-
-
-case class FunctionDefinition(specifiers: List[DeclarationSpecifier], 
-    declarator: Declarator, 
-    declarations: List[Declaration],
-    body: Statement) 
-
-
-
