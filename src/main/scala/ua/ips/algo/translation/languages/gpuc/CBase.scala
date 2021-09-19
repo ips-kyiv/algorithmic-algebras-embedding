@@ -41,23 +41,7 @@ trait CBase  {
   //def run(bundle: OutputBundle): baseInterpretation.DataItem = ???
 
 
-  def write(bundle: OutputBundle1, dataDir: String): Unit =
-    val path = Path.of(dataDir)
-    for((name,ast) <- bundle.compilationUnits) {
-      val file = outputFile(path, name)
-      try {
-        val startState = PrintState.create()
-        val finishState = ast.print(startState)
-        val s = finishState.collectBlock().value
-        println(s"file $name:")
-        println("BEGIN-----------------------------")
-        println(s)
-        println("END-----------------------------")
-        file.print(s);
-      } finally {
-        file.close()
-      }
-    }
+  def write(bundle: OutputBundle1, dataDir: String): Unit = ???
 
   def outputFile(dataDir: Path, fname: String): PrintWriter = 
     val nPath = dataDir.resolve(fname);
@@ -68,17 +52,9 @@ trait CBase  {
     // for now - le't d
     fullName.mkString
 
-  def genMainNode(irCtx: IRContext, name:String): TranslationUnit = {
-     val ctx = CBaseGenContext(irCtx)
-     val stdDecls = genStandardDeclarations(ctx)
-     val mainDecl = genMainDeclaration(ctx, name) 
-     val mainDecls: List[ExternalDeclaration] = List(mainDecl)
-     val prototypes: List[ExternalDeclaration] = ctx.functionPrototypes.toList
-     val defintions: List[ExternalDeclaration] = ctx.functionDefinitions.toList
-     TranslationUnit(
-       stdDecls ++ prototypes ++ mainDecls ++ defintions  
-     )
-  }
+  def genMainNode(irCtx: IRContext, name:String): TranslationUnit = 
+    ???
+  
 
   def genStandardDeclarations(ctx: CBaseGenContext): List[ExternalDeclaration] = {
     List.empty
@@ -86,23 +62,11 @@ trait CBase  {
 
   def genMainDeclaration(ctx: CBaseGenContext, name: String): ExternalDeclaration = {
      ???
-     val parameters = ctx.irCtx.inputParams.flatMap(_.inputs).map(v =>
-        ParameterDeclaration( genIVarSpecifiers(ctx, v), Declarator(None, IdentifierDeclarator(Identifier(v.name))) )
-     ).toList
-     val returnTypeSpecifiers = genTypeSpecifiers(ctx,ctx.irCtx.outputs(0).expr.sort) 
-     FunctionDefinition(specifiers=returnTypeSpecifiers, //: List[DeclarationSpecifier], 
-            declarator = Declarator(None, 
-              FunctionDirectDeclarator(
-                Identifier(name),
-                ParameterTypeList(parameters, false) 
-              )
-            ), 
-            declarations = List.empty, //: List[Declaration],  TODO: vars
-            body = genCompoundStatement(ctx,  ctx.irCtx.rootNode)
-      ) 
   }
 
   def genCompoundStatement(ctx: CBaseGenContext, node: IRNode): CompoundStatement = {
+    ???
+    /*
     node match
       case SeqIRNode(id,schema,childs) =>
           CompoundStatement(childs.flatMap(x => genBlockItems(ctx, x)).toList)
@@ -121,7 +85,7 @@ trait CBase  {
       case _ => 
           println(s"Generation of compount statement is not implemented for node $node")
           ???
-
+    */
   }
 
   def genIVarSpecifiers(ctx: CBaseGenContext, v: IRVar): List[SpecifierQualifier] =
