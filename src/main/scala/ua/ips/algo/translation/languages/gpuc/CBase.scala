@@ -9,34 +9,24 @@ import java.nio.file._
 
 trait CBase  {
 
-  type AstDef = TranslationUnit
-
-  case class OutputBundle1(name: String, compilationUnits:Map[String,AstDef])
-
-  def genContext(ctx: IRContext): OutputBundle1 = 
-   ???
-
-  def signatureDef(items: Seq[AstDef]): AstDef = ???
-  
-
-  def write(bundle: OutputBundle1, dataDir: String): Unit = ???
 
   def outputFile(dataDir: Path, fname: String): PrintWriter = 
+    ???
+    /*
     val nPath = dataDir.resolve(fname);
     val bf = Files.newBufferedWriter(nPath,StandardOpenOption.CREATE,StandardOpenOption.TRUNCATE_EXISTING)
     new PrintWriter(bf)
+    */
     
   def generateName(fullName: Seq[String]): String =
+    ???
     // for now - le't d
-    fullName.mkString
+    //fullName.mkString
 
   def genMainNode(irCtx: IRContext, name:String): TranslationUnit = 
     ???
   
 
-  def genStandardDeclarations(ctx: CBaseGenContext): List[ExternalDeclaration] = {
-    List.empty
-  }
 
   def genMainDeclaration(ctx: CBaseGenContext, name: String): ExternalDeclaration = {
      ???
@@ -100,9 +90,7 @@ trait CBase  {
 
 
   def toMultiplicativeExpression(expr: Expression): MultiplicativeExpression =
-    expr match
-      case mExpr: MultiplicativeExpression => mExpr
-      case _ => WrappedExpression(expr)
+    ???
 
   def toCastExpression(expr: Expression): CastExpression =
     expr match
@@ -111,13 +99,6 @@ trait CBase  {
 
 
   def generateConstantExpression(vtx: CBaseGenContext, sort: DataSort, value: String): Expression =
-    sort match
-      case BasicDataSort(sortName) =>
-        sortName match
-          case IntBasicRep.name => IntConstant(value.toInt)
-          //case StringBasicRep.name => StringConstant(value)
-          case _ => ???
-      case _ => ???
-
+    ???
 
 }
