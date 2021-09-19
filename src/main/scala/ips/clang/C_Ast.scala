@@ -7,7 +7,7 @@ sealed trait Expression extends C_Ast
 
 sealed trait PrimaryExpression extends PostfixExpression
 
-case class Identifier(value:String)  extends PrimaryExpression with TypeDefName 
+case class Identifier(value:String)  extends PrimaryExpression 
 
 case class IntConstant(value: Int)  extends PrimaryExpression
 case class CharConstant(value: Char)  extends PrimaryExpression
@@ -132,22 +132,15 @@ case class CommaExpression(frs: Expression, snd: Expression) extends Expression
 
 case class Declarator(pointer: Option[Pointer], base: String)
 
-case class TypeName(specifiers: List[SpecifierQualifier], declarator: Option[AbstractDeclarator])
+case class TypeName(specifiers: List[DeclarationSpecifier], declarator: Option[AbstractDeclarator])
 
 sealed trait AbstractDeclarator 
-case class Pointer( typeQual: List[SpecifierQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
-
-sealed trait SpecifierQualifier extends DeclarationSpecifier
-
-case class EnumSpecifier(name: Option[Identifier], enumerators: List[Enumerator]) extends SpecifierQualifier
-
-sealed trait TypeDefName
+case class Pointer( typeQual: List[DeclarationSpecifier], pointer: Option[Pointer]) extends AbstractDeclarator
 
 
 case class Enumerator(name: Identifier, value: Option[Expression])
 
-case class StructComponentDeclaration(qualifiers: List[SpecifierQualifier], declarators: List[Int])
+case class StructComponentDeclaration(qualifiers: List[DeclarationSpecifier], declarators: List[Int])
 
 sealed trait DeclarationSpecifier
-
 
