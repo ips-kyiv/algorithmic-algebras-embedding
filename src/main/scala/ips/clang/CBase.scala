@@ -1,4 +1,4 @@
-package ua.ips.algo.translation.languages.gpuc
+package ips.clang
 
 
 
