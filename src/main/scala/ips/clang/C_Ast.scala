@@ -1,6 +1,5 @@
 package ips.clang
 
-//  https://github.com/antlr/grammars-v4/blob/master/c/C.g4
 
 sealed trait C_Ast
 
@@ -162,9 +161,6 @@ enum AssignmentOperator(val sign: String){
 
 case class CommaExpression(frs: Expression, snd: Expression) extends Expression
 
-sealed trait Designator
-case class IndexDesignator(expression: Expression) extends Designator
-case class DotDesignator(identifier: Identifier) extends Designator
 
 case class Declarator(pointer: Option[Pointer],
                       base: DirectDeclarator) extends StructDeclarator 
@@ -172,15 +168,16 @@ case class Declarator(pointer: Option[Pointer],
 case class TypeName(specifiers: List[SpecifierQualifier], declarator: Option[AbstractDeclarator])
 
 sealed trait AbstractDeclarator 
-case class Pointer( typeQual: List[TypeQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
+//case class Pointer( typeQual: List[TypeQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
+case class Pointer( typeQual: List[SpecifierQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
 sealed trait DirectDeclarator
 case class IdentifierDeclarator(id: Identifier) extends DirectDeclarator
 case class WrappedDirectDeclarator(declarator: Declarator) extends DirectDeclarator
-case class ArrayDirectDeclarator(base: DirectDeclarator, 
-   qualifers: List[TypeQualifier], 
-   expression: Option[PrecAssigmentExpression]) extends DirectDeclarator
-case class ArrayPointerDirectDeclarator(base: DirectDeclarator, 
-   qualifers: List[TypeQualifier]) extends DirectDeclarator
+//case class ArrayDirectDeclarator(base: DirectDeclarator, 
+//   qualifers: List[TypeQualifier], 
+//   expression: Option[PrecAssigmentExpression]) extends DirectDeclarator
+//case class ArrayPointerDirectDeclarator(base: DirectDeclarator, 
+//   qualifers: List[TypeQualifier]) extends DirectDeclarator
 
 case class FunctionDirectDeclarator(base: DirectDeclarator, params: ParameterTypeList ) extends DirectDeclarator
 case class BitFieldDirectDeclarator(name: Identifier, expr: Expression) extends DirectDeclarator
@@ -190,9 +187,9 @@ case class FunctionPointerDirectDeclarator(typeSpecifier: Option[TypeSpecifier],
 sealed trait SpecifierQualifier extends DeclarationSpecifier
 sealed trait TypeSpecifier extends SpecifierQualifier 
 
-sealed trait TypeQualifier extends SpecifierQualifier 
-case object CONST extends TypeQualifier
-case object VOLATILE extends TypeQualifier
+//sealed trait TypeQualifier extends SpecifierQualifier 
+//case object CONST extends TypeQualifier
+//case object VOLATILE extends TypeQualifier
 
 
 
@@ -315,7 +312,8 @@ case class InitDeclarator(decl: Declarator, initializer: Option[Initializer])
 type Initializer = PrecAssigmentExpression
 case class CompoundInitializer(components: List[CompoundInitializerComponent])
 
-case class CompoundInitializerComponent(designators: List[Designator], initializer: Initializer)
+//case class CompoundInitializerComponent(designators: List[Designator], initializer: Initializer)
+case class CompoundInitializerComponent(designators: List[Int], initializer: Initializer)
 
 
 case class StaticAssert(expression: Expression, message: StringLiteral) extends ExternalDeclaration
