@@ -168,16 +168,10 @@ case class Declarator(pointer: Option[Pointer],
 case class TypeName(specifiers: List[SpecifierQualifier], declarator: Option[AbstractDeclarator])
 
 sealed trait AbstractDeclarator 
-//case class Pointer( typeQual: List[TypeQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
 case class Pointer( typeQual: List[SpecifierQualifier], pointer: Option[Pointer]) extends AbstractDeclarator
 sealed trait DirectDeclarator
 case class IdentifierDeclarator(id: Identifier) extends DirectDeclarator
 case class WrappedDirectDeclarator(declarator: Declarator) extends DirectDeclarator
-//case class ArrayDirectDeclarator(base: DirectDeclarator, 
-//   qualifers: List[TypeQualifier], 
-//   expression: Option[PrecAssigmentExpression]) extends DirectDeclarator
-//case class ArrayPointerDirectDeclarator(base: DirectDeclarator, 
-//   qualifers: List[TypeQualifier]) extends DirectDeclarator
 
 case class FunctionDirectDeclarator(base: DirectDeclarator, params: ParameterTypeList ) extends DirectDeclarator
 case class BitFieldDirectDeclarator(name: Identifier, expr: Expression) extends DirectDeclarator
@@ -186,10 +180,6 @@ case class FunctionPointerDirectDeclarator(typeSpecifier: Option[TypeSpecifier],
 
 sealed trait SpecifierQualifier extends DeclarationSpecifier
 sealed trait TypeSpecifier extends SpecifierQualifier 
-
-//sealed trait TypeQualifier extends SpecifierQualifier 
-//case object CONST extends TypeQualifier
-//case object VOLATILE extends TypeQualifier
 
 
 
@@ -209,16 +199,8 @@ case object __M128 extends BaseTypeSpecifier
 case object __M128D extends BaseTypeSpecifier
 case object __M128I extends BaseTypeSpecifier
 
-case class AtomicTypeSpecifier(typeName: TypeName) extends TypeSpecifier
-case class StructOrUnionSpecifier(kind: StructOrUnion, name: Identifier, components: List[StructComponentDeclaration]) extends TypeSpecifier
 case class EnumSpecifier(name: Option[Identifier], enumerators: List[Enumerator]) extends TypeSpecifier
 
-sealed trait StructOrUnion
-case object STRUCT extends StructOrUnion
-case object UNION extends StructOrUnion
-
-
-//case class TypeDefName(name: Identifier) extends TypeSpecifier
 sealed trait TypeDefName
 
 case class PointerTypeSpecifier(base: TypeSpecifier, pointer: Pointer) extends TypeSpecifier
@@ -229,22 +211,6 @@ case class StructComponentDeclaration(qualifiers: List[SpecifierQualifier], decl
 
 sealed trait DeclarationSpecifier
 
-sealed trait StorageClassSpecifier extends DeclarationSpecifier
-case object TYPEDEF extends StorageClassSpecifier
-case object EXTERN extends StorageClassSpecifier
-case object STATIC extends StorageClassSpecifier
-case object _THREAD_LOCAL extends StorageClassSpecifier
-case object AUTO extends StorageClassSpecifier
-case object REGISTER extends StorageClassSpecifier
-
-// OpenCL extendsion
-sealed trait AddressSpaceQualifier extends SpecifierQualifier with DeclarationSpecifier
-case object LOCAL extends AddressSpaceQualifier
-case object GLOBAL extends AddressSpaceQualifier
-case object CONSTANT extends AddressSpaceQualifier
-case object PRIVATE extends AddressSpaceQualifier
-case object GENERIC extends AddressSpaceQualifier
-
 
 sealed trait FunctionSpecifier extends DeclarationSpecifier
 case object INLINE extends FunctionSpecifier
@@ -252,15 +218,10 @@ case object NORETURN extends FunctionSpecifier
 case object STDCALL extends FunctionSpecifier
 case class Declspec(value: Identifier) extends FunctionSpecifier
 
-// OpenCL
-sealed trait KernelSpecifier extends FunctionSpecifier
-case object KERNEL extends KernelSpecifier
-case class VecTypeHint(typeName: TypeName)  extends KernelSpecifier
-case class WorkGroupSizeHint(sizes: List[Int]) extends KernelSpecifier
 
-sealed trait AlignmentSpecifer extends DeclarationSpecifier
-case class AligmentAsTypeSpecifier(typeName: TypeName) extends AlignmentSpecifer
-case class AlignmentAsExprSpecifer(expr: Expression) extends AlignmentSpecifer
+//sealed trait AlignmentSpecifer extends DeclarationSpecifier
+//case class AligmentAsTypeSpecifier(typeName: TypeName) extends AlignmentSpecifer
+//case class AlignmentAsExprSpecifer(expr: Expression) extends AlignmentSpecifer
 
 sealed trait StructDeclarator
 case class BitFieldDeclarator(base: Declarator, bits: Expression) extends StructDeclarator
