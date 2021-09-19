@@ -181,24 +181,6 @@ case class FunctionPointerDirectDeclarator(typeSpecifier: Option[TypeSpecifier],
 sealed trait SpecifierQualifier extends DeclarationSpecifier
 sealed trait TypeSpecifier extends SpecifierQualifier 
 
-
-
-sealed trait BaseTypeSpecifier extends TypeSpecifier
-case object VOID extends BaseTypeSpecifier
-case object CHAR extends BaseTypeSpecifier
-case object SHORT extends BaseTypeSpecifier
-case object INT extends BaseTypeSpecifier
-case object LONG extends BaseTypeSpecifier
-case object FLOAT extends BaseTypeSpecifier
-case object DOUBLE extends BaseTypeSpecifier
-case object SIGNED extends BaseTypeSpecifier
-case object UNSIGNED extends BaseTypeSpecifier
-case object _BOOL extends BaseTypeSpecifier
-case object _COMPLEX extends BaseTypeSpecifier
-case object __M128 extends BaseTypeSpecifier
-case object __M128D extends BaseTypeSpecifier
-case object __M128I extends BaseTypeSpecifier
-
 case class EnumSpecifier(name: Option[Identifier], enumerators: List[Enumerator]) extends TypeSpecifier
 
 sealed trait TypeDefName
@@ -212,17 +194,6 @@ case class StructComponentDeclaration(qualifiers: List[SpecifierQualifier], decl
 sealed trait DeclarationSpecifier
 
 
-sealed trait FunctionSpecifier extends DeclarationSpecifier
-case object INLINE extends FunctionSpecifier
-case object NORETURN extends FunctionSpecifier
-case object STDCALL extends FunctionSpecifier
-case class Declspec(value: Identifier) extends FunctionSpecifier
-
-
-//sealed trait AlignmentSpecifer extends DeclarationSpecifier
-//case class AligmentAsTypeSpecifier(typeName: TypeName) extends AlignmentSpecifer
-//case class AlignmentAsExprSpecifer(expr: Expression) extends AlignmentSpecifer
-
 sealed trait StructDeclarator
 case class BitFieldDeclarator(base: Declarator, bits: Expression) extends StructDeclarator
 
@@ -230,7 +201,6 @@ case class ParameterTypeList(parameters: List[ParameterDeclaration], withVarargs
 
 case class ParameterDeclaration(specifiers: List[DeclarationSpecifier], declarator: Declarator)
 
-//sealed trait ParameterDeclarator
 
 sealed trait BlockItem 
 
@@ -256,13 +226,6 @@ case class ForStatement(init: Option[ForInit], condition: Option[Expression], up
 
 sealed trait ForInit
 
-sealed trait JumpStatement extends Statement
-case class Goto(label: Identifier) extends JumpStatement
-case object Continue extends JumpStatement
-case object Break extends JumpStatement
-case class Return(expression: Option[Expression]) extends JumpStatement
-
-case class AsmStatement(data: StringLiteral) extends Statement
 
 case class Declaration(specifiers: List[DeclarationSpecifier], 
                        initDeclarators: List[InitDeclarator]) extends ExternalDeclaration with BlockItem
@@ -273,7 +236,6 @@ case class InitDeclarator(decl: Declarator, initializer: Option[Initializer])
 type Initializer = PrecAssigmentExpression
 case class CompoundInitializer(components: List[CompoundInitializerComponent])
 
-//case class CompoundInitializerComponent(designators: List[Designator], initializer: Initializer)
 case class CompoundInitializerComponent(designators: List[Int], initializer: Initializer)
 
 
@@ -291,9 +253,6 @@ case class TranslationUnit(declarations: List[ExternalDeclaration])
 
 sealed trait ExternalDeclaration
 
-/**
-* Pseudo-object wich actualy present not C text, but other
-**/
 case class StringLob(value:String) extends ExternalDeclaration
 
 
