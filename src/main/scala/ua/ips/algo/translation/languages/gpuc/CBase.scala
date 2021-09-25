@@ -230,10 +230,15 @@ trait CBase extends Language {
             case _ =>
               ???
 
-  def genPrecAssigmentExpression(ctx: CBaseGenContext, expr: DataExpression): PrecAssigmentExpression =
-    genExpression(ctx, expr) match
-      case e: PrecAssigmentExpression => e
-      case other => WrappedExpression(other)
+  def genPrecAssigmentExpression(ctx: CBaseGenContext, dataExpr: DataExpression): PrecAssigmentExpression =
+    val expr = genExpression(ctx, dataExpr)
+    //expr match
+    //  case e: PrecAssigmentExpression => e
+    //  case other => WrappedExpression(other)
+    if  expr.isInstanceOf[PrecAssigmentExpression]  then
+        expr.asInstanceOf[PrecAssigmentExpression]
+    else
+        WrappedExpression(expr)
 
 
   def isSpecialSignature(signature: DataSortSignature): Boolean =
@@ -258,14 +263,26 @@ trait CBase extends Language {
 
 
   def toMultiplicativeExpression(expr: Expression): MultiplicativeExpression =
-    expr match
-      case mExpr: MultiplicativeExpression => mExpr
-      case _ => WrappedExpression(expr)
+    //
+    //expr match
+    //  case mExpr: MultiplicativeExpression => mExpr
+    //  case _ => WrappedExpression(expr)
+    if (expr.isInstanceOf[MultiplicativeExpression]) then
+        expr.asInstanceOf[MultiplicativeExpression]
+    else
+        WrappedExpression(expr)
 
   def toCastExpression(expr: Expression): CastExpression =
-    expr match
-      case cExpr: CastExpression => cExpr
-      case _ => WrappedExpression(expr)
+    //
+    // dotty regression: see https://github.com/lampepfl/dotty/issues/13565
+    //expr match
+    //  case cExpr: CastExpression => cExpr
+    //  case _ => WrappedExpression(expr)
+    //
+    if (expr.isInstanceOf[CastExpression]) then
+       expr.asInstanceOf[CastExpression]
+    else
+       WrappedExpression(expr)
 
 
   def generateConstantExpression(vtx: CBaseGenContext, sort: DataSort, value: String): Expression =
