@@ -10,8 +10,8 @@ class ParseAstPrintTest extends FunSuite {
 
    test("print simple expression") {
 
-    import ua.ips.algo.translation.languages.gpuc._ 
-    import ua.ips.algo.translation.languages.gpuc.given
+    import ua.ips.algo.translation.languages.clike._ 
+    import ua.ips.algo.translation.languages.clike.given
     
 
     val cAst = (

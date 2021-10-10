@@ -1,4 +1,4 @@
-package ua.ips.algo.translation.languages.gpuc
+package ua.ips.algo.translation.languages.clike
 
 
 import ua.ips.algo._
@@ -8,6 +8,7 @@ import java.nio.file._
 
 
 trait CBase extends Language {
+
 
   type AstDef = TranslationUnit
 
@@ -89,7 +90,7 @@ trait CBase extends Language {
      val parameters = ctx.irCtx.inputParams.flatMap(_.inputs).map(v =>
         ParameterDeclaration( genIVarSpecifiers(ctx, v), Declarator(None, IdentifierDeclarator(Identifier(v.name))) )
      ).toList
-     val returnTypeSpecifiers = genTypeSpecifiers(ctx,ctx.irCtx.outputs(0).expr.sort) 
+     val returnTypeSpecifiers = EXTERN::genTypeSpecifiers(ctx,ctx.irCtx.outputs(0).expr.sort) 
      FunctionDefinition(specifiers=returnTypeSpecifiers, //: List[DeclarationSpecifier], 
             declarator = Declarator(None, 
               FunctionDirectDeclarator(

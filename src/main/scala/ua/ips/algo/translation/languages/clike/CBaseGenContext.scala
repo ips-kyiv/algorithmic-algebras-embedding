@@ -1,5 +1,5 @@
 
-package ua.ips.algo.translation.languages.gpuc
+package ua.ips.algo.translation.languages.clike
 
 import scala.collection.mutable.ArrayBuffer
 

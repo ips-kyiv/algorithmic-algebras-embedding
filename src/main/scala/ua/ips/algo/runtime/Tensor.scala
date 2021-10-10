@@ -15,3 +15,4 @@ trait Tensor[E] {
     def getElement(indexes: Int*): Option[E]
 
 }
+

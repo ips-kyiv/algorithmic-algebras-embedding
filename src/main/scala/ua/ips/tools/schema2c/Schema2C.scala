@@ -8,7 +8,7 @@ import java.net.URLClassLoader
 
 import ua.ips.algo.*
 import ua.ips.algo.translation.*
-import ua.ips.algo.translation.languages.gpuc.*
+import ua.ips.algo.translation.languages.clike.*
 
 
 
