@@ -1,5 +1,7 @@
 package ua.ips.algo
 
+class InterpretationException(message: String, ex: Throwable=null) extends RuntimeException(message, ex)
+
 
 trait Interpretation {
 
@@ -10,7 +12,7 @@ trait Interpretation {
   def constant[T](value: T, rep: DataSortRep[T]): DataItem 
 
   // interpert signature or throw exception is one is not implemented
-  def apply(signature:DataSortSignature, args: Seq[DataItem]): DataItem
+  def apply(signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem
 
 }
 
@@ -21,7 +23,7 @@ trait FreeInterpretation extends Interpretation {
 
   case class ConstantDataItem[T](dataSort: DataSort, value: T) extends FreeDataItem
 
-  case class UninterpretedFunctionDataItem(signature:DataSortSignature, 
+  case class UninterpretedFunctionDataItem(signature: TypesOnlyDataSortSignature, 
                                            args: Seq[DataItem]) extends FreeDataItem:
     def  dataSort = signature.out
                        
@@ -42,7 +44,7 @@ trait FreeInterpretation extends Interpretation {
   override def constant[T](value: T, rep: DataSortRep[T]): DataItem =
     ConstantDataItem[T](rep.dataSort, value) 
   
-  override def apply(signature:DataSortSignature, args: Seq[DataItem]): DataItem =
+  override def apply(signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem =
     //TODO: check typing
     // TODO: add term rewriting in non-free
     UninterpretedFunctionDataItem(signature, args)

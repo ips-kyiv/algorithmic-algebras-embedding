@@ -1,7 +1,8 @@
 package ua.ips.algo.translation.languages.scala
 
-import ua.ips.algo.*
+import scala.quoted.*
 import ua.ips.algo.translation.*
+import ua.ips.algo.{*,given}
 
 trait ScalaGen {
 
@@ -23,11 +24,10 @@ trait ScalaGen {
   def generateName(ctx: IRContext, fullName: Seq[String]): String =
     fullName.mkString(".")
 
-  def genMainNode(ctx: IRContext, name: String): AstDef = {
-    ???
-    /*
+  def genMainNode(irCtx: IRContext, name: String): AstDef = {
      val ctx = ScalaGenContext(irCtx)
      val mainDecl = genMainDeclaration(ctx, name) 
+     /*
      val mainDecls: List[DefDef] = List(mainDecl)
      val defintions: List[DefDef] = ctx.functionDefinitions.toList
 
@@ -35,7 +35,17 @@ trait ScalaGen {
         mainDecls ++ defintions  
      )
      */
+     mainDecl
   }
 
+  def genMainDeclaration(ctx: ScalaGenContext, name: String): AstDef = {
+      import qctx.reflect.*
+      //val inputs = ctx.generateInputs(ctx.irCtx.rootNode);
+      val expr = '{
+        new Fun1SchemaRepresentation1[Int,Int](${Expr(name)}, x => x+1, '{x => x+1})
+      }
+      expr.asTerm
+  }
 
 }
+

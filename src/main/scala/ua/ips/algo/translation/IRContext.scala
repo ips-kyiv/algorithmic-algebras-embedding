@@ -29,14 +29,19 @@ class IRContext(val target: Target, val fullName: Seq[String]) {
             node
           case None => 
             throw new RuntimeException(s"Node with id ${id} is not found in context");
-
+          
   val controlFlow:Graph[NodeId, Boolean, Boolean] = Graph()
 
   def addNode(id: NodeId, node: IRNode): Unit =
-    println(s"IRCOntext.put $id  $node")
     allNodes.put(id, node)
     if (id == rootId) then
       rootNode = node;
+
+  def removeNode(id: NodeId): Unit =
+    if (false) {
+        // check for correctness.
+    }
+    allNodes.remove(id)
     
   private val allNodes: MutableHashMap[NodeId, IRNode] = MutableHashMap()
 }
