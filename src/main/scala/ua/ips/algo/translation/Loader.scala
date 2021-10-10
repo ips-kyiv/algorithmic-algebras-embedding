@@ -1,8 +1,17 @@
 package ua.ips.algo.translation
 
-import ua.ips.algo._
+import scala.concurrent.*
+import ua.ips.algo.*
 
-trait Loader(val target: Target) {
+trait Loader(target: Target) {
+
+
+    /**
+     * run prepare step after genration bundle.
+     * This can be call of makefile or external build tools.
+     * On error - complete returned future with exception.
+     **/
+    def prepare(signature: DataSortSignature, path: String): Future[Unit]
 
     /**
      * load generated code.
