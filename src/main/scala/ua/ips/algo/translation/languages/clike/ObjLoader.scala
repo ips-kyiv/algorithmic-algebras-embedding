@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap
 import cps.*
 import cps.monads.{given,*}
 
+import jdk.incubator.foreign.*
+
 
 /**
  * load objec file for schema.
@@ -21,9 +23,10 @@ class ObjLoader(target: Target) extends Loader(target) {
     // library should be loaded only onve, so we keep the list of loaded names and directories here.
     private val loadedNames = new ConcurrentHashMap[String,Interpretation]()
  
-    def prepare(signature: DataSortSignature, path: String): Future[Unit] = ccompile(signature, path)
+    def prepare(signature: DataSortSignature, path: String, variant: Seq[String]): Future[Unit] = 
+      ccompile(signature, path, variant)
 
-    def ccompile(signature: DataSortSignature, path: String): Future[Unit] = async[Future] {
+    def ccompile(signature: DataSortSignature, path: String, variant: Seq[String]): Future[Unit] = async[Future] {
        val pbCMake = new ProcessBuilder("cmake", path)
        val cmakeProcess = pbCMake.start()
        val cmakeExit = cmakeProcess.onExit()
@@ -42,19 +45,37 @@ class ObjLoader(target: Target) extends Loader(target) {
        }
        // val libfunname = mangleSignature(signature)
        // system process
+       // TODO: move lib to libdir ?
     }
 
-    //TODO: mangle C name of signatures.
-    def load(signature: DataSortSignature, path: String): Interpretation = {
+    
+    def load(signature: DataSortSignature, path: String, variant: Seq[String]): Interpretation = {
 
-      var retval = loadedNames.get(path) 
+      val moduleName = NamesMangling.objModuleName(signature, variant)
+      val name = s"${path}/${moduleName}";
+      var retval = loadedNames.get(name, variant) 
       if !(retval eq null ) then {
         // library should be loaded only onve, so we keep the list of loaded names
         return retval
       }
-      ???
-      
+      // 
+      // TODO:  add path to set of laoded classes. 
+      //  Now, think that out dir is in classpath
+      System.loadLibrary(moduleName);
+      //
+      val cLinker = CLinker.getInstance()
+
+      val functionName = NamesMangling.objFunctionName(signature,variant)
+      val optMainFun = CLinker.systemLookup().lookup(functionName)
+      if (optMainFun.isEmpty) {
+        // TODO: full diagnostics.
+        throw new TranslationException(s"object for name ${functionName} is not found in ${moduleName}")
+      } 
+      val interpretation = new Jep412Caller(signature, optMainFun.get, variant)
+      loadedNames.put(moduleName, interpretation)
+      return interpretation;
     }
 
+    
  
 }

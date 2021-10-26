@@ -16,8 +16,8 @@ class Translator(val target: Target)
       
    
    def optimize(input: SchemaModule): IRContext =
-      var ctx = new IRContext(target, input.packageName :+ input.name )
-      val irNode = IRNode.accept(ctx,input.schema,ctx.rootId)
+      var ctx = new IRContext(target, input.packageName :+ input.name, Seq() )
+      val irNode = IRNode.accept(ctx,input.schema,  IRContext.rootId)
       println("IRNode: "+ irNode)
       println("ctx root before optimize: " + ctx.rootNode)
       // TODO: 

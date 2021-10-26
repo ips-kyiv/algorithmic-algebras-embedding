@@ -10,14 +10,18 @@ import scala.collection.mutable.ArrayBuffer
 
 type NodeId = String
 
-class IRContext(val target: Target, val fullName: Seq[String]) {
+/**
+ *
+ **/
+class IRContext(val target: Target, 
+                val fullName: Seq[String], 
+                val variant: Seq[String],
+                var rootNode: IRNode = EmptyIRNode(IRContext.rootId),
+                val inputParams: ArrayBuffer[IRInputs] = ArrayBuffer[IRInputs](),
+                val outputs: ArrayBuffer[IROutput] = ArrayBuffer[IROutput](),
+                val allNodes: MutableHashMap[NodeId, IRNode] = MutableHashMap()
+                ) {
 
-  val rootId = "root"
-
-  var rootNode: IRNode = EmptyIRNode(rootId)
-
-  val inputParams: ArrayBuffer[IRInputs] = ArrayBuffer[IRInputs]()
-  val outputs: ArrayBuffer[IROutput] = ArrayBuffer[IROutput]()
 
   def nodeById(id:String): IRNode =
     allNodes.get(id) match
@@ -34,7 +38,7 @@ class IRContext(val target: Target, val fullName: Seq[String]) {
 
   def addNode(id: NodeId, node: IRNode): Unit =
     allNodes.put(id, node)
-    if (id == rootId) then
+    if (id ==IRContext.rootId) then
       rootNode = node;
 
   def removeNode(id: NodeId): Unit =
@@ -42,7 +46,13 @@ class IRContext(val target: Target, val fullName: Seq[String]) {
         // check for correctness.
     }
     allNodes.remove(id)
-    
-  private val allNodes: MutableHashMap[NodeId, IRNode] = MutableHashMap()
+
+  def  fork(variants: Seq[String]): Seq[IRContext] = ???
+
+  
+}
+
+object IRContext {
+  val rootId = "root";
 }
 
