@@ -67,6 +67,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
       case app@Apply(obj, args) => processApply(app, base)
       case lt@Literal(constant) => processLiteral(lt, base)
       case Assign(lhs,rhs) => processAssign(lhs, rhs, base)
+      case sel@Select(qualifier, symbol) => processSelect(sel, base)
       case _ => 
            throw SchemaCompileException(s"term is not supported yet ${body}", body.asExpr)
 
@@ -139,11 +140,15 @@ class SchemaEmbedding(using val qctx: Quotes) {
               
 
   private def processApply(applyTerm: Apply, base: Expr[SchemaBase]): WithBase[Schema] =
+    import scala.collection._
     applyTerm match
       case Apply(TypeApply(sel@Select(obj,method),typeArgs), args) =>
-         if (method=="foreach" && obj.tpe <:< TypeRepr.of[ParRange] ) {
+         if (method=="foreach" && obj.tpe <:< TypeRepr.of[ParRange]) {
             processParRange(obj, args.head, base)
-         } else {
+         } else if (method=="foreach" && obj.tpe <:< TypeRepr.of[ArrayOps[?]]){
+            processFor(obj, args.head, base)
+         } 
+         else {
            throw SchemaCompileException(s"type arguments are not supported (term=${applyTerm})", applyTerm.asExpr)
          }
       case Apply(sel@Select(obj,method),args) =>
@@ -257,6 +262,39 @@ class SchemaEmbedding(using val qctx: Quotes) {
          case Block(List(), body) => processParRange(parRange, body, base)
          case _ =>
             throw SchemaCompileException("Lambda in parRange foreach is expected", foreachArg.asExpr)
+   
+  private def processFor(forTerm: Term, forArg: Term, base: Expr[SchemaBase]) : WithBase[Schema] =
+      forArg match
+         case Lambda(params, body) =>
+            if (params.length > 1) {
+               throw SchemaCompileException("for loop should have one argument", forArg.asExpr)
+            }
+            var param = params.head
+            val paramSort = findDataSort(param.tpt.tpe, forArg.asExpr)
+            val (start,finish, workSize) = forTerm match
+               case Apply(Ident(intArrayOps), List(Ident(arr))) =>
+                  (Expr(0).asTerm, Expr(arr.length - 1).asTerm, Expr(arr.length).asTerm)
+               case _ =>
+                  throw SchemaCompileException("Can't parse forTerm, should be in form (x to y).par(z)" + forArg,forTerm.asExpr)
+            println(s"!forRange=${forTerm}")
+            println(s"!start=${start}")
+            println(s"!finish=${finish}")
+            println(s"!workSize = ${workSize} ")
+            val startSchema = processTerm(start,base)
+            val finishSchema = processTerm(finish,startSchema.base)
+            val workSizeSchema = processTerm(workSize, finishSchema.base)
+            val bodySchema = processTerm(body, workSizeSchema.base)
+            val r = '{
+               ParallelIterationSchema(
+                  ${Expr(param.name)},
+                  ${startSchema.value}.asDataExpression,
+                  ${finishSchema.value}.asDataExpression,
+                  ${workSizeSchema.value}.asDataExpression,
+                  ${bodySchema.value}
+               )
+            }
+            WithBase(bodySchema.base, r)
+         case _ => throw SchemaCompileException("Lambda in for loop is expected", forArg.asExpr)
 
 
   private def processIdent(id: Ident, base: Expr[SchemaBase]): WithBase[Schema] =
@@ -270,6 +308,11 @@ class SchemaEmbedding(using val qctx: Quotes) {
         val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.constant.show)})) }
         WithBase(newBase, schema)
 
+   private def processSelect(term: Select, state: Expr[SchemaBase]): WithBase[Schema] = 
+        val sort = findDataSort(term.tpe.widen, term.asExpr)
+        val newBase = '{  ${state}.copy(sorts = ${state}.sorts + ${sort})  }
+        val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.name)})) }
+        WithBase(newBase, schema)
 
   //  TODO: check that appropriative operations on DataRep exists ?
   private def buildDataSortSignature(sel: Select, paramSorts: Seq[Expr[DataSort]], out: Expr[DataSort]): Expr[DataSortSignature] =
