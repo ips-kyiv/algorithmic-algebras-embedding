@@ -82,4 +82,19 @@ class ParseMinimalSchemaTest extends FunSuite {
       }
       println(schema)
   }
+
+  // test("bubbleSorting") {
+  //   var schema = Schema.build{
+  //     (arr: Array[Int]) =>
+  //       for (i <- 1 to arr.length - 1){
+  //         for (j <- (i-1) to 0 by -1){
+  //           if (arr(j) > arr(j + 1)){
+  //             val temp = arr(j + 1)
+  //             arr(j + 1) = arr(j)
+  //             arr(j) = temp
+  //           }
+  //         }
+  //       }
+  //   }
+  // }
 }
