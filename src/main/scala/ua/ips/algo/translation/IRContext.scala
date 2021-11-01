@@ -47,7 +47,13 @@ class IRContext(val target: Target,
     }
     allNodes.remove(id)
 
-  def  fork(variants: Seq[String]): Seq[IRContext] = ???
+  def  fork(variants: Seq[String]): Seq[IRContext] = 
+    variants.map( newVariant => 
+        IRContext(target, fullName, variants.appended(newVariant),
+           rootNode, inputParams.clone(), outputs.clone(),
+           allNodes.clone()
+        )
+    )
 
   
 }
