@@ -4,6 +4,7 @@ import ua.ips.algo.runtime.*
 
 import scala.compiletime.*
 import scala.quoted.*
+import scala.collection.ArrayOps
 
 
 sealed trait DataSort:
@@ -96,6 +97,13 @@ object DoubleBasicRep extends BasicDataSortRep[Double] {
 }
 given DataSortRep[Double] = DoubleBasicRep
 
+object UnitBasicRep extends BasicDataSortRep[Unit] {
+
+   val name: String = "unit"
+
+}
+given DataSortRep[Unit] = UnitBasicRep
+
 
 case class Cartesian2Rep[A <: Matchable,B <: Matchable](a: DataSortRep[A], b: DataSortRep[B]) extends DataSortRep[(A,B)]:
 
@@ -118,3 +126,6 @@ inline given FixedArray2Rep[E <: Matchable,N <: Int](using e: DataSortRep[E]): D
 
 given Tensor1DataSortRep[E <: Matchable](using e:DataSortRep[E]): DataSortRep[Array[E]] with
    val  dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
+
+given Tensor2DataSortRep[E](using e:DataSortRep[E]): DataSortRep[ArrayOps[E]] with
+   val dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
