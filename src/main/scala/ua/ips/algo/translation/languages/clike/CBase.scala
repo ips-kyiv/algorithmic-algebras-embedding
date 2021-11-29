@@ -166,9 +166,10 @@ trait CBase extends Language {
   def genVariableDeclaration(ctx: CBaseGenContext, name: String, init: DataExpression): Declaration = 
       init.sort match 
         case basicSort: BasicDataSort =>
-          genBasicVariableDeclaration(ctx, name, basicSort, init)
-        case arrSort: FixedArrayDataSort =>
-          genArrayVariableDeclaration(ctx, name, arrSort, init)
+          genBasicVariableDeclaration(ctx, name, basicSort, init)  
+        // case arrSort: FixedArrayDataSort =>
+        //  instread check constant in tensor.  
+        //  genArrayVariableDeclaration(ctx, name, arrSort, init)
         case _ => 
           println(s"variable declaraor for sort ${init.sort} is not implemented yet");
           ???
@@ -183,8 +184,8 @@ trait CBase extends Language {
       Declaration(specifiers, List(initDeclarator))
       
 
-  def genArrayVariableDeclaration(ctx: CBaseGenContext, name: String,
-                                  sort: FixedArrayDataSort, init: DataExpression): Declaration = ???
+  //def genArrayVariableDeclaration(ctx: CBaseGenContext, name: String,
+  //                                sort: FixedArrayDataSort, init: DataExpression): Declaration = ???
 
 
   def genTypeSpecifiers(ctx: CBaseGenContext, sort: DataSort): List[SpecifierQualifier] =
@@ -197,9 +198,9 @@ trait CBase extends Language {
           case DoubleBasicRep.name => List(DOUBLE)
           case _ =>
             throw new IllegalArgumentException(s"Unsupported basic sort: $name")
-      case FixedArrayDataSort(length, baseSort) =>
-          val baseDeclarations = genTypeSpecifiers(ctx, baseSort)
-          ???
+      //case FixedArrayDataSort(length, baseSort) =>
+      //    val baseDeclarations = genTypeSpecifiers(ctx, baseSort)
+      //    ???
           // can't without direct clarator.
       case _ =>
         println(s"sort is not supported yet for C: $sort")

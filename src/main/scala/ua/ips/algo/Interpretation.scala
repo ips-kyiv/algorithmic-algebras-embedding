@@ -7,12 +7,49 @@ trait Interpretation {
 
   type DataItem
 
-  def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T]
+  type DataScope <: AutoCloseable
 
-  def constant[T](value: T, rep: DataSortRep[T]): DataItem 
+  
+  def extract[T](scope: DataScope, item: DataItem, rep: DataSortRep[T]): Option[T]
+  
 
-  // interpert signature or throw exception is one is not implemented
-  def apply(signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem
+  def constant[T](scope: DataScope, value: T, rep: DataSortRep[T]): DataItem 
+
+  /**
+   * interpert signature or throw exception is one is not implemented.
+   * Parameters are passed in internal encoding
+   **/
+  def applyInternal(scope: DataScope, signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem
+
+  /**
+   * create new data-scope
+   **/
+  def newDataScope(): DataScope
+
+
+  /**
+   * interpert signature or throw exception is one is not implemented.
+   * Parameters are passed as universal values.
+   **/
+  def apply(signature: TypesOnlyDataSortSignature, args: Seq[DataSortValue[?]]): DataSortValue[?] =
+    val scope = newDataScope()
+    try
+      val items = args.map( a => a.constantFor(this)(scope) )
+      val itemRetval = applyInternal(scope, signature, items)
+      val retRep = DataSort.findRep(signature.out)
+      extract(scope, itemRetval, retRep) match
+        case Some(v) => DataSortValue(retRep, v)
+        case None =>
+          throw new InterpretationException("return value is unrepresentable in the host")
+    finally
+      scope.close()
+
+
+}
+
+object DummyDataScope extends AutoCloseable {
+
+  override def close(): Unit = {}
 
 }
 
@@ -30,7 +67,11 @@ trait FreeInterpretation extends Interpretation {
 
   override type DataItem = FreeDataItem
 
-  override def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T] =
+  override type DataScope = DummyDataScope.type
+
+  override def newDataScope(): DataScope = DummyDataScope
+
+  override def extract[T](scope: DataScope, item: DataItem, rep: DataSortRep[T]): Option[T] =
     rep match
       case BasicDataSort(name) =>
               item match
@@ -41,14 +82,15 @@ trait FreeInterpretation extends Interpretation {
               // TODO: build deriving typeclasses for scala
               ???
 
-  override def constant[T](value: T, rep: DataSortRep[T]): DataItem =
+  override def constant[T](scope: DataScope, value: T, rep: DataSortRep[T]): DataItem =
     ConstantDataItem[T](rep.dataSort, value) 
   
-  override def apply(signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem =
+  override def applyInternal(scope: DataScope, signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem =
     //TODO: check typing
     // TODO: add term rewriting in non-free
     UninterpretedFunctionDataItem(signature, args)
 
+  
 
   def extractPrimitive[T](name: String, item: ConstantDataItem[?]): Option[T] =
      item.dataSort match

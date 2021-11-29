@@ -65,6 +65,7 @@ class ObjLoader(target: Target) extends Loader(target) {
       //
       val cLinker = CLinker.getInstance()
 
+
       val functionName = NamesMangling.objFunctionName(signature,variant)
       val optMainFun = CLinker.systemLookup().lookup(functionName)
       if (optMainFun.isEmpty) {

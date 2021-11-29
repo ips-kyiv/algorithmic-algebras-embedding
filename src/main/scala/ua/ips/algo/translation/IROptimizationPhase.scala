@@ -12,5 +12,4 @@ trait IROptimizationPhase {
 
    def apply(ctx: IRContext): IRContext;
 
-
 }

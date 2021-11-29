@@ -9,17 +9,21 @@ class ScalaInterpreter(knownSchemas: Map[TypesOnlyDataSortSignature, SchemaRepre
 
   type DataItem = Matchable
 
-  def apply(signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem = 
+  type DataScope = DummyDataScope.type
+
+  def newDataScope(): DataScope = DummyDataScope
+
+  def applyInternal(scope: DataScope, signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem = 
     knownSchemas.get(signature) match
       case Some(repr) =>
-        repr.apply(using this)(args)
+        repr.apply(using this)(scope, args)
       case None =>
         throw new InterpretationException(s"Unknonw scema with signature: ${signature}")
 
-  def constant[T](value: T, rep: DataSortRep[T]): DataItem = value
+  def constant[T](scope: DataScope, value: T, rep: DataSortRep[T]): DataItem = value
 
   // TODO: check, mb we b
-  def extract[T](item: DataItem, rep: DataSortRep[T]): Option[T] =
+  def extract[T](scope: DataScope, item: DataItem, rep: DataSortRep[T]): Option[T] =
     item match
       case t:T => Some(t)
       case _  => None
