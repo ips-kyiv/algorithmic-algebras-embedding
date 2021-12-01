@@ -21,7 +21,7 @@ class ObjLoader(target: Target) extends Loader(target) {
     import scala.concurrent.ExecutionContext.Implicits.global
 
     // library should be loaded only onve, so we keep the list of loaded names and directories here.
-    private val loadedNames = new ConcurrentHashMap[String,Interpretation]()
+    private val loadedNames = new ConcurrentHashMap[String,LoadedInterpretation]()
  
     def prepare(signature: DataSortSignature, path: String, variant: Seq[String]): Future[Unit] = 
       ccompile(signature, path, variant)
@@ -49,7 +49,7 @@ class ObjLoader(target: Target) extends Loader(target) {
     }
 
     
-    def load(signature: DataSortSignature, path: String, variant: Seq[String]): Interpretation = {
+    def load(signature: DataSortSignature, path: String, variant: Seq[String]): LoadedInterpretation = {
 
       val moduleName = NamesMangling.objModuleName(signature, variant)
       val name = s"${path}/${moduleName}";
@@ -64,15 +64,14 @@ class ObjLoader(target: Target) extends Loader(target) {
       System.loadLibrary(moduleName);
       //
       val cLinker = CLinker.getInstance()
-
-
       val functionName = NamesMangling.objFunctionName(signature,variant)
       val optMainFun = CLinker.systemLookup().lookup(functionName)
       if (optMainFun.isEmpty) {
         // TODO: full diagnostics.
         throw new TranslationException(s"object for name ${functionName} is not found in ${moduleName}")
       } 
-      val interpretation = new Jep412Caller(signature, optMainFun.get, variant)
+
+      val interpretation = new Jep412Interpretation(signature, optMainFun.get, variant)
       loadedNames.put(moduleName, interpretation)
       return interpretation;
     }

@@ -18,8 +18,21 @@ trait Loader(target: Target) {
      *@param signature - signature of schema which was compiled into target.
      *@param path - path, where compiled output bundle was build.
      *@param variant - variant of choosen set of optimizations.
-     *@return interpretation, which can interpret the main schema of the bundle.
+     *@return caller, which can call the main schema of the bundle.
      **/
-    def load(signature: DataSortSignature, path: String, variant: Seq[String]): Interpretation 
+    def load(mainSignature: DataSortSignature, path: String, variant: Seq[String]): LoadedInterpretation 
 
 }
+
+trait  LoadedInterpretation  extends Interpretation {
+
+    trait LoadedFunctionCaller {
+        def signature: TypesOnlyDataSortSignature
+        def call(scope: DataScope, args: Seq[DataItem]): DataItem
+    }
+
+    def  resolve(signature: TypesOnlyDataSortSignature): LoadedFunctionCaller
+ 
+}
+
+
