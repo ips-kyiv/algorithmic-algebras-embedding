@@ -22,6 +22,9 @@ class ScalaInterpreter(knownSchemas: Map[TypesOnlyDataSortSignature, SchemaRepre
 
   def constant[T](scope: DataScope, value: T, rep: DataSortRep[T]): DataItem = value
 
+  def javaRefConstant(scope: DataScope, value: AnyRef, rep: DataSortRep[?]): DataItem = value
+
+
   // TODO: check, mb we b
   def extract[T](scope: DataScope, item: DataItem, rep: DataSortRep[T]): Option[T] =
     item match

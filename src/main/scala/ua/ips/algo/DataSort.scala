@@ -72,7 +72,16 @@ trait DataSortRep[T]:
    def constantValue(value: T): DataSortValue[T] =
         DataSortValue(this, value) 
 
-        
+   def javaClass: Class[?]
+
+   def javaRefClass: Class[?]
+
+   /**
+    * set item form java object reference.
+    **/
+   def javaRefConstant(interpretation:Interpretation)(scope: interpretation.DataScope, value:AnyRef): interpretation.DataItem =
+      interpretation.javaRefConstant(scope, value, this)
+      
 
 trait BasicDataSortRep[T <: Matchable] extends DataSortRep[T] {
 
@@ -99,6 +108,10 @@ object IntBasicRep extends BasicDataSortRep[Int] {
 
    val name: String = "int"
 
+   val javaClass = classOf[Int]
+
+   val javaRefClass = classOf[java.lang.Integer]
+
 }
 
 given DataSortRep[Int] = IntBasicRep
@@ -106,6 +119,11 @@ given DataSortRep[Int] = IntBasicRep
 object BooleanBasicRep extends BasicDataSortRep[Boolean] {
 
    val name: String = "boolean"
+
+   val javaClass = classOf[Boolean]
+
+   val javaRefClass = classOf[java.lang.Boolean]
+
 
 }
 
@@ -116,12 +134,20 @@ object FloatBasicRep extends BasicDataSortRep[Float] {
 
    val name: String = "float"
 
+   val javaClass = classOf[Float]
+
+   val javaRefClass = classOf[java.lang.Float]
+
 }
 given DataSortRep[Float] = FloatBasicRep
 
 object DoubleBasicRep extends BasicDataSortRep[Double] {
 
    val name: String = "double"
+
+   val javaClass = classOf[Double]
+
+   val javaRefClass = classOf[java.lang.Double]
 
 }
 given DataSortRep[Double] = DoubleBasicRep
@@ -130,10 +156,20 @@ object UnitBasicRep extends BasicDataSortRep[Unit] {
 
    val name: String = "unit"
 
+   val javaClass = classOf[Unit]
+
+   val javaRefClass = classOf[java.lang.Void]
+
+
 }
 given DataSortRep[Unit] = UnitBasicRep
 
-sealed trait TupleDataSortRep[T <: Tuple] extends DataSortRep[T]:
+trait RefDataSortRep[T <: AnyRef]:
+   this: DataSortRep[T] =>
+   def javaClass: Class[T]  
+   def javaRefClass: Class[T] = javaClass
+
+sealed trait TupleDataSortRep[T <: Tuple] extends DataSortRep[T] with RefDataSortRep[T]:
    def length: Int
 
 object TupleDataSortRep:
@@ -150,9 +186,11 @@ object TupleDataSortRep:
   
 
 
+
 case class Cartesian2Rep[A,B](a: DataSortRep[A], b: DataSortRep[B]) extends TupleDataSortRep[(A,B)]:
    def length = 2
    val dataSort: DataSort = TupleDataSort(IndexedSeq(a.dataSort, b.dataSort))
+   val javaClass: Class[Tuple2[A,B]] = classOf[Tuple2[A,B]] 
 
 
 given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): TupleDataSortRep[(A,B)] =
@@ -162,7 +200,7 @@ given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): TupleDataS
 case class Cartesian3Rep[A,B,C](a: DataSortRep[A], b: DataSortRep[B], c:DataSortRep[C]) extends TupleDataSortRep[(A,B,C)]:
    def length = 3
    val dataSort: DataSort = TupleDataSort(IndexedSeq(a.dataSort, b.dataSort, c.dataSort))
-
+   val javaClass: Class[Tuple3[A,B,C]] = classOf[Tuple3[A,B,C]]
 
 given cartesian3Rep[A,B, C](using a: DataSortRep[A], b: DataSortRep[B], c:DataSortRep[C]): TupleDataSortRep[(A,B,C)] =
    Cartesian3Rep(a,b,c)
@@ -175,16 +213,16 @@ object TensorDataSortRep:
 
 
 
-given tensorArrayDataSortRep[E](using e:DataSortRep[E]): DataSortRep[Array[E]] with
+given tensorArrayDataSortRep[E](using e:DataSortRep[E]): DataSortRep[Array[E]] with RefDataSortRep[Array[E]] with
    val  dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
+   val  javaClass: Class[Array[E]] = classOf[Array[E]]
 
-given tensorArrayOpsDataSortRep[E](using e:DataSortRep[E]): DataSortRep[ArrayOps[E]] with
-   val dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
 
 import scala.collection.mutable.ArrayBuffer   
 
-given tensorArrayBufferDataSortRep[E](using e:DataSortRep[E]): DataSortRep[ArrayBuffer[E]] with
+given tensorArrayBufferDataSortRep[E](using e:DataSortRep[E]): DataSortRep[ArrayBuffer[E]] with RefDataSortRep[ArrayBuffer[E]] with
    val dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
+   val  javaClass: Class[ArrayBuffer[E]] = classOf[ArrayBuffer[E]]
 
 
 object NamedSetRep:
@@ -206,7 +244,9 @@ object NamedSetRep:
          candidate.instance
 
 
-case class UniversalNamedSetRep(override val dataSort: NamedSet, elements: Map[String, DataSortRep[?]]) extends DataSortRep[Map[String,Any]]
+case class UniversalNamedSetRep(override val dataSort: NamedSet, elements: Map[String, DataSortRep[?]]) extends DataSortRep[Map[String,Any]] with RefDataSortRep[Map[String,Any]] {
+   def javaClass: Class[Map[String,Any]] = classOf[Map[String,Any]]
+}
 
 object UniversalNamedSetRep {
 

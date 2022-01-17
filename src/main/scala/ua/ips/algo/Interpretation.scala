@@ -15,6 +15,9 @@ trait Interpretation {
 
   def constant[T](scope: DataScope, value: T, rep: DataSortRep[T]): DataItem 
 
+
+  def javaRefConstant(scope: DataScope, value: AnyRef, rep: DataSortRep[?]): DataItem
+
   /**
    * interpert signature or throw exception is one is not implemented.
    * Parameters are passed in internal encoding
@@ -84,6 +87,10 @@ trait FreeInterpretation extends Interpretation {
 
   override def constant[T](scope: DataScope, value: T, rep: DataSortRep[T]): DataItem =
     ConstantDataItem[T](rep.dataSort, value) 
+
+  override def javaRefConstant(scope: DataScope, value: AnyRef, rep: DataSortRep[?]): DataItem =
+    ConstantDataItem(rep.dataSort, value)
+    
   
   override def applyInternal(scope: DataScope, signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem =
     //TODO: check typing
