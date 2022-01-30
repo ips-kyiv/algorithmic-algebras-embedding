@@ -328,7 +328,12 @@ class SchemaEmbedding(using val qctx: Quotes) {
         val paramDescriptions: Seq[Expr[(String,DataSort)]] = paramNames.zip(paramSorts).map{
             case (name, sort) => Expr.ofTupleFromSeq(Seq(Expr(name),sort)).asExprOf[(String,DataSort)]
         }
-        '{ DataSortSignature(${Expr(sel.name)}, ${Expr.ofSeq(paramDescriptions)}, $out) }
+        val fullName = FullName.fromString(sel.symbol.fullName)
+        '{ DataSortSignature(
+                 ${Expr(fullName.packageName)}, 
+                 ${Expr(fullName.name)}, 
+                 ${Expr.ofSeq(paramDescriptions)}, 
+                 $out) }
         
         
 }

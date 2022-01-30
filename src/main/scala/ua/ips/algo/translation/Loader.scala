@@ -4,14 +4,16 @@ import scala.concurrent.*
 import ua.ips.algo.*
 
 
-trait Loader(target: Target) {
+trait Loader{
+
+    val target: Target
 
     /**
      * run prepare step after genration bundle.
      * This can be call of makefile or external build tools.
      * On error - complete returned future with exception.
      **/
-    def prepare(signature: DataSortSignature, path: String, variant: Seq[String]): Future[Unit]
+    def prepare(signature: DataSortSignature, path: String, variant: Seq[String]): Future[LoadedInterpretation]
 
     /**
      * load generated code.

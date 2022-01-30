@@ -39,7 +39,7 @@ object ScalaInterperer{
    val IntDataSort = IntBasicRep.dataSort
 
    val defaultSchemas = Map(
-     DataSortSignature("+", Seq(("a",IntDataSort),("b",IntDataSort)),IntDataSort).typesOnly -> 
+     DataSortSignature(Seq("base","int"),"+", Seq(("a",IntDataSort),("b",IntDataSort)),IntDataSort).typesOnly -> 
                                   Fun2SchemaRepresentation1("+",(a:Int, b:Int) => a + a, 
                                   '{ (a:Int, b:Int) => a + b } )
    )

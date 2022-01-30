@@ -54,7 +54,6 @@ class IRContext(val target: Target,
            allNodes.clone()
         )
     )
-
   
 }
 

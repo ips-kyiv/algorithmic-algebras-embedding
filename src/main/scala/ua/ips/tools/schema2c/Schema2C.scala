@@ -12,10 +12,9 @@ import ua.ips.algo.translation.languages.clike.*
 
 
 
-class SchemaToC(config: Schema2CConfig) extends Translator(SchemaToC.buildTarget(config)) {
-
-
-
+class SchemaToC(config: Schema2CConfig) extends TranslatorWithLoader(SchemaToC.buildTarget(config)) 
+                                                  with ObjLoader
+{
 }
 
 object SchemaToC {
@@ -31,6 +30,7 @@ object SchemaToC {
         case Some(jar) => createCustomClassloader(jar)
         case None => this.getClass().getClassLoader()
       val name = config.inputObject          
+      processObject(name, classLoader, transpiler, config)
   }
 
   def processObject(name: String, loader: ClassLoader,  transpiler: Translator, config: Schema2CConfig) = {
@@ -47,6 +47,8 @@ object SchemaToC {
     val outputBundle = transpiler.compile(module)
     transpiler.target.language.write(outputBundle, config.outputDir)
   }
+
+  
 
   def parseConfig(args: Array[String]): Schema2CConfig = {
       // TODO: parse args and modifu default.
@@ -68,8 +70,6 @@ object SchemaToC {
     val jarFile = new File(jar);
     val urls = Array[URL](jarFile.toURI().toURL());
     new URLClassLoader(urls,ClassLoader.getSystemClassLoader())
-        
-
   }
 
 }

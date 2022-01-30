@@ -10,6 +10,7 @@ case class DataSortValue[T](sortRep: DataSortRep[T], value: T) {
 
 object DataSortValue {
 
-  
+  given toValue[T](using DataSortRep[T]): Conversion[T,DataSortValue[T]] =
+      (t) => DataSortValue(summon[DataSortRep[T]], t)
 
 }

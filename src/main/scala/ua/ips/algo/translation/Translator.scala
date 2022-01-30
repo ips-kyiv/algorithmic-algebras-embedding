@@ -2,7 +2,7 @@ package ua.ips.algo.translation
 
 import ua.ips.algo._
 
-class Translator(val target: Target)
+trait Translator(val target: Target)
 {
 
    // TODO: ordering phases.

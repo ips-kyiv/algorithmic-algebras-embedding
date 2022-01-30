@@ -10,4 +10,8 @@ case class SchemaModule(
     packageName: Seq[String],
     name: String,
     schema: Schema
-)
+)  {
+
+  def extractSignature(): DataSortSignature = schema.extractSignature(packageName, name)
+
+}

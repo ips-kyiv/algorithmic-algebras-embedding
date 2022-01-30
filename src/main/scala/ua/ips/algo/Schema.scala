@@ -8,7 +8,8 @@ case class SchemaBase(
   signatures: Set[DataSortSignature])
 
 /**
- * representation of AlgoSchema
+ * representation of AlgoSchema (without name and package.)
+ *@see SchemaModule - as schemw aith anme and package.
  **/
 sealed trait Schema:
   
@@ -20,6 +21,10 @@ sealed trait Schema:
 
   def lift(using Quotes): Expr[Schema]
  
+  def extractSignature(packageName:Seq[String], name:String): DataSortSignature = ???
+
+
+
 // ? - List instead pair 
 case class SequentialSchema(x: Schema, y: Schema) extends Schema:
 

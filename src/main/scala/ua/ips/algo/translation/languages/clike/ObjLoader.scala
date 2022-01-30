@@ -16,17 +16,17 @@ import jdk.incubator.foreign.*
 /**
  * load objec file for schema.
  **/
-class ObjLoader(target: Target) extends Loader(target) {
+trait ObjLoader extends Loader {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
     // library should be loaded only onve, so we keep the list of loaded names and directories here.
     private val loadedNames = new ConcurrentHashMap[String,LoadedInterpretation]()
  
-    def prepare(signature: DataSortSignature, path: String, variant: Seq[String]): Future[Unit] = 
+    def prepare(signature: DataSortSignature, path: String, variant: Seq[String]): Future[LoadedInterpretation] = 
       ccompile(signature, path, variant)
 
-    def ccompile(signature: DataSortSignature, path: String, variant: Seq[String]): Future[Unit] = async[Future] {
+    def ccompile(signature: DataSortSignature, path: String, variant: Seq[String]): Future[LoadedInterpretation] = async[Future] {
        val pbCMake = new ProcessBuilder("cmake", path)
        val cmakeProcess = pbCMake.start()
        val cmakeExit = cmakeProcess.onExit()
@@ -43,9 +43,9 @@ class ObjLoader(target: Target) extends Loader(target) {
        if (makeProcess.exitValue() != 0) {
          throw new IllegalStateException("make return non-zero exit code");
        }
-       // val libfunname = mangleSignature(signature)
-       // system process
-       // TODO: move lib to libdir ?
+
+       load(signature, path, variant)
+
     }
 
     
