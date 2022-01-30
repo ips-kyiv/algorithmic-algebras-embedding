@@ -48,6 +48,7 @@ class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress
    
    }
 
+   val mainCaller = new Jep412Caller(mainSignature.typesOnly, mainFunctionAddress) 
 
    def newDataScope(): ResourceScope = ResourceScope.newConfinedScope()
 
@@ -55,13 +56,27 @@ class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress
       ???
    }
  
-   def constant[T](scope: ResourceScope, value: T, rep: DataSortRep[T]): DataItem = ???
+   def constant[T](scope: ResourceScope, value: T, rep: DataSortRep[T]): DataItem = 
+      rep.dataSort match
+         case BasicDataSort(name) =>
+            name match 
+               case IntBasicRep.name => 
+                  value match
+                     case v: Int => v
+                     case _ => throw InterpretationException(s"Value $value is not int")
+               case _ => ???
+         case _ => ???
+
 
    def javaRefConstant(scope: ResourceScope, value: AnyRef, rep: DataSortRep[?]): DataItem = ???
 
      // interpert signature or throw exception is one is not implemented
    def applyInternal(scope: ResourceScope, signature: TypesOnlyDataSortSignature, args: Seq[DataItem]): DataItem = {
-      ???
+      if (signature == mainSignature.typesOnly) {
+         mainCaller.call(scope, args)
+      } else {
+         throw InterpretationException(s"loaded and called signatures are different, loaded: ${mainSignature.typesOnly}, call:${signature}")
+      }
    }
 
    override def  resolve(signature: TypesOnlyDataSortSignature): LoadedFunctionCaller =

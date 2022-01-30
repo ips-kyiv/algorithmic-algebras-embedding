@@ -20,9 +20,12 @@ lazy val root = project
     // libraryDependencies += ("org.scalameta" %% "scalameta" % "4.4.28").cross(CrossVersion.for3Use2_13),
     libraryDependencies += "com.github.rssh" %% "dotty-cps-async" % "0.9.7",
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.27" % Test,
-    testFrameworks += new TestFramework("munit.Framework"),
     resolvers += Resolver.sbtPluginRepo("releases"),
-    git.remoteRepo := "git@github.com:ips-kyiv/algorithmic-algebras-embedding.git"
+    git.remoteRepo := "git@github.com:ips-kyiv/algorithmic-algebras-embedding.git",
+    Test / fork := true,
+    Test / javaOptions ++= Seq("--enable-native-access=ALL-UNNAMED",
+                               "--add-modules", "jdk.incubator.foreign"
+                              )
   )
   .enablePlugins(SiteScaladocPlugin,
                   GhpagesPlugin)

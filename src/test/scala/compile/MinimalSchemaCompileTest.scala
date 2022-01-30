@@ -12,7 +12,7 @@ class MinimalSchemaCompileTest extends FunSuite:
     val schema = Schema.build{
       (x:Int) => x+1
     }
-    println(schema)
+    //println(schema)
     val translator = SchemaToC(Schema2CConfig())
     val schemaModule = SchemaModule(Seq(),"testmin", schema)
     val outputBundle = translator.compile(schemaModule)

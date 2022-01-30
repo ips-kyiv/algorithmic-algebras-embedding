@@ -9,6 +9,9 @@ import ua.ips.tools.schema2c.*
 import cps.*
 import cps.monads.{*,given}
 
+import java.io.File
+
+
 import munit.*
 
 class MinimalSchemaCompileTest extends FunSuite:
@@ -30,6 +33,10 @@ class MinimalSchemaCompileTest extends FunSuite:
 
     val outputBundle = translator.compile(schemaModule)
     val outputDir = "testdata/compileAndRunMinimalSchema"
+    val outputDirFile = new File(outputDir)
+    if (! outputDirFile.exists()) {
+      outputDirFile.mkdirs()
+    }
     translator.target.language.write(outputBundle, outputDir)
     val fut = async[Future] {
       val interpreter = await(translator.prepare(signature, outputDir, Seq()))

@@ -1,7 +1,8 @@
 package ua.ips.algo.translation
+import ua.ips.algo.*
 
 //TODO: add pos
-class TranslationException(message: String, code: Int = TranslationException.GENERIC) extends RuntimeException
+class TranslationException(message: String, code: Int = TranslationException.GENERIC, ex: Throwable = null) extends SchemaException(message, ex)
 
 object TranslationException {
 

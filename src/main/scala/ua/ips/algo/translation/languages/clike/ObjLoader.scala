@@ -27,18 +27,24 @@ trait ObjLoader extends Loader {
       ccompile(signature, path, variant)
 
     def ccompile(signature: DataSortSignature, path: String, variant: Seq[String]): Future[LoadedInterpretation] = async[Future] {
-       val pbCMake = new ProcessBuilder("cmake", path)
+       val fPath = new File(path)
+       val pbCMake = new java.lang.ProcessBuilder("cmake", ".").inheritIO().directory(fPath)
+       println("starting cmake");
+       //val logger = ProcessLogger(s => println(s))
        val cmakeProcess = pbCMake.start()
+       
+       //cmakeProcess.waitFor()
        val cmakeExit = cmakeProcess.onExit()
        // TODO: output cmake output, maybe via channel or asynclist
        await(cmakeExit) 
        if (cmakeProcess.exitValue() != 0) {
          throw new IllegalStateException("cmake return non-zero exit code");
        }
-       val pbMake = new ProcessBuilder("make").directory(new File(path))
+       val pbMake = new ProcessBuilder("make").inheritIO().directory(fPath)
        val makeProcess = pbMake.start()
        // TODO: outpt pbMake output.
        val makeExit = makeProcess.onExit()
+       await(makeExit)
        // TODO: output make output
        if (makeProcess.exitValue() != 0) {
          throw new IllegalStateException("make return non-zero exit code");
@@ -61,13 +67,16 @@ trait ObjLoader extends Loader {
       // 
       // TODO:  add path to set of laoded classes. 
       //  Now, think that out dir is in classpath
-      System.loadLibrary(moduleName);
+      println(s"loading library ${path}/${moduleName}")
+      val fullPath = java.nio.file.Paths.get(s"${path}/${moduleName}")
+      System.load(fullPath.toAbsolutePath.toString);
       //
       val cLinker = CLinker.getInstance()
       val functionName = NamesMangling.objFunctionName(signature,variant)
-      val optMainFun = CLinker.systemLookup().lookup(functionName)
+      val optMainFun = SymbolLookup.loaderLookup().lookup(functionName)
       if (optMainFun.isEmpty) {
         // TODO: full diagnostics.
+        println(s"object for name ${functionName} is not found in ${moduleName}")
         throw new TranslationException(s"object for name ${functionName} is not found in ${moduleName}")
       } 
 

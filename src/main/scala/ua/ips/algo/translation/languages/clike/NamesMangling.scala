@@ -11,7 +11,7 @@ object NamesMangling {
 
   def objModuleName(signature: DataSortSignature, variant: Seq[String]): String = {
     // TODO: implement manginglin with all types of parameters and hash of variant.
-    "main";
+    System.mapLibraryName(signature.name)
   }
 
 
