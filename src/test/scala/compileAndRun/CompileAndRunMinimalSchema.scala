@@ -13,7 +13,7 @@ import munit.*
 
 class MinimalSchemaCompileTest extends FunSuite:
 
-  test("parse and compile minimal schema") {
+  test("parse and compile minimal schema".ignore) {
 
     val schema = Schema.build{
       (x:Int) => x+1
@@ -36,6 +36,7 @@ class MinimalSchemaCompileTest extends FunSuite:
       val x = interpreter.apply(signature.typesOnly, Seq(5))
       assert(x.value == 6)
     }
-    Await.result(fut, 1.minute)
+    fut  // munit will care
+    //Await.result(fut, 1.minute)
   }
 
