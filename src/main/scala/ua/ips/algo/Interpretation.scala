@@ -1,6 +1,6 @@
 package ua.ips.algo
 
-class InterpretationException(message: String, ex: Throwable=null) extends RuntimeException(message, ex)
+class InterpretationException(message: String, ex: Throwable=null) extends SchemaException(message, ex)
 
 
 trait Interpretation {
