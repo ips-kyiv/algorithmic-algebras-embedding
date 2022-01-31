@@ -95,6 +95,7 @@ object BasicDataSortRep {
    def find(name:String): BasicDataSortRep[?] =
       name match
          case IntBasicRep.name => IntBasicRep
+         case LongBasicRep.name => LongBasicRep
          case FloatBasicRep.name => FloatBasicRep
          case BooleanBasicRep.name => BooleanBasicRep
          case DoubleBasicRep.name => DoubleBasicRep
@@ -113,8 +114,20 @@ object IntBasicRep extends BasicDataSortRep[Int] {
    val javaRefClass = classOf[java.lang.Integer]
 
 }
-
 given DataSortRep[Int] = IntBasicRep
+
+
+object LongBasicRep extends BasicDataSortRep[Long] {
+
+   val name: String = "long"
+
+   val javaClass = classOf[Long]
+
+   val javaRefClass = classOf[java.lang.Long]
+
+}
+given DataSortRep[Long] = LongBasicRep
+
 
 object BooleanBasicRep extends BasicDataSortRep[Boolean] {
 

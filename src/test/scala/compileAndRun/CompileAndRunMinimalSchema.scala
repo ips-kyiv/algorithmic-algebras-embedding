@@ -41,6 +41,7 @@ class MinimalSchemaCompileTest extends FunSuite:
     val fut = async[Future] {
       val interpreter = await(translator.prepare(signature, outputDir, Seq()))
       val x = interpreter.apply(signature.typesOnly, Seq(5))
+      println(s"received value $x")
       assert(x.value == 6)
     }
     fut  // munit will care
