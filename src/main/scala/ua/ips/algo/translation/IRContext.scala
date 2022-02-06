@@ -10,8 +10,10 @@ import scala.collection.mutable.ArrayBuffer
 
 type NodeId = String
 
+//  SIMD , GPU
+
 /**
- *
+ * Intermedia Representation
  **/
 class IRContext(val target: Target, 
                 val fullName: Seq[String], 

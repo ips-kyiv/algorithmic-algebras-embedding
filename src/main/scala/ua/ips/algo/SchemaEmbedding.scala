@@ -34,10 +34,12 @@ class SchemaEmbedding(using val qctx: Quotes) {
                  }
                  val bodySchema = processTerm(body, '{ SchemaBase(sorts=${Expr.ofSeq(inputs)}.map(_.sort).toSet, signatures=Set.empty) } )
                  val base = bodySchema.base
+                 val pos = SourcePosition.treePos(f.asTerm).lift
                  '{
                    SequentialSchema(
-                    InputSchema(${Expr.ofSeq(inputs)}),
-                    ${bodySchema.value}
+                    InputSchema(${Expr.ofSeq(inputs)}, ${pos}),
+                    ${bodySchema.value},
+                    ${pos}
                    )
                  }
          case Inlined(x,List(),body) => buildImpl[X](body.asExprOf[X])
@@ -60,51 +62,53 @@ class SchemaEmbedding(using val qctx: Quotes) {
 
 
   def processTerm(body: Term, base: Expr[SchemaBase]): WithBase[Schema] =
+    val pos = SourcePosition.treePos(body)
     body match
-      case Block(statements,last) => processBlock(statements, last, base)
-      case If(cond,ifTrue,ifFalse) => processIf(cond, ifTrue, ifFalse, base)
-      case While(cond,body) => processWhile(cond, body, base)
-      case id@Ident(name) => processIdent(id, base)
-      case app@Apply(obj, args) => processApply(app, base)
-      case lt@Literal(constant) => processLiteral(lt, base)
-      case Assign(lhs,rhs) => processAssign(lhs, rhs, base)
-      case sel@Select(qualifier, symbol) => processSelect(sel, base)
+      case block@Block(statements,last) => processBlock(statements, last, base, pos)
+      case If(cond,ifTrue,ifFalse) => processIf(cond, ifTrue, ifFalse, base, pos)
+      case While(cond,body) => processWhile(cond, body, base, pos)
+      case id@Ident(name) => processIdent(id, base, pos)
+      case app@Apply(obj, args) => processApply(app, base, pos)
+      case lt@Literal(constant) => processLiteral(lt, base, pos)
+      case Assign(lhs,rhs) => processAssign(lhs, rhs, base, pos)
+      case sel@Select(qualifier, symbol) => processSelect(sel, base, pos)
       case _ => 
            throw SchemaCompileException(s"term is not supported yet ${body}", body.asExpr)
 
 
-  private def processBlock(statements:List[Statement], last: Term, base: Expr[SchemaBase]): WithBase[Schema] = 
+  private def processBlock(statements:List[Statement], last:Term,  base: Expr[SchemaBase], pos:SourcePosition): WithBase[Schema] = 
     statements match
       case Nil => processTerm(last, base)
       case head::tail => 
          val frs = processStatement(head, base)
-         val snd = processBlock(tail, last, frs.base)
-         val expr =  '{ SequentialSchema( ${frs.value},  ${snd.value} ) }
+         val nextPos = SourcePosition.treePos(tail.headOption.getOrElse(last))
+         val snd = processBlock(tail, last, frs.base, nextPos)
+         val expr =  '{ SequentialSchema( ${frs.value},  ${snd.value}, ${pos.lift} ) }
          WithBase(base, expr)
 
-  private def processIf(cond:Term, ifTrue: Term, ifFalse:Term, base: Expr[SchemaBase]): WithBase[Schema] = 
+  private def processIf(cond:Term, ifTrue: Term, ifFalse:Term, base: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] = 
     val predicate = processPredicate(cond, base)
     val ifTrueSchema = processTerm(ifTrue, predicate.base)
     val ifFalseSchema = processTerm(ifFalse, ifTrueSchema.base)
     val r = '{
-       ConditionalSchema(${predicate.value}, ${ifTrueSchema.value}, ${ifFalseSchema.value})
+       ConditionalSchema(${predicate.value}, ${ifTrueSchema.value}, ${ifFalseSchema.value}, ${pos.lift})
     }
     WithBase(ifFalseSchema.base, r)
  
-  private def processWhile(cond:Term, body:Term, base: Expr[SchemaBase]): WithBase[Schema] = 
+  private def processWhile(cond:Term, body:Term, base: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] = 
     val predicate = processPredicate(cond, base)
     val bodySchema = processTerm(body,predicate.base)
     val r = '{
-        LoopSchema(${predicate.value}, ${bodySchema.value})
+        LoopSchema(${predicate.value}, ${bodySchema.value}, ${pos.lift})
     }
     WithBase(bodySchema.base, r)
 
-  private def processAssign(lhs:Term, rhs:Term, base: Expr[SchemaBase] ): WithBase[Schema] =
+  private def processAssign(lhs:Term, rhs:Term, base: Expr[SchemaBase], pos: SourcePosition ): WithBase[Schema] =
     lhs match
       case Ident(name) =>
          val rhsSchema = processTerm(rhs, base)
          val r = '{
-            AssignSchema(${Expr(name)}, ${rhsSchema.value}.asDataExpression)
+            AssignSchema(${Expr(name)}, ${rhsSchema.value}.asDataExpression, ${pos.lift})
          }
          WithBase(rhsSchema.base, r)
       case _ =>
@@ -132,22 +136,22 @@ class SchemaEmbedding(using val qctx: Quotes) {
               val v = processTerm(cond, base)
               val r = '{
                  ${v.value} match
-                     case OutputSchema(e) =>
-                             BaseCondition(e)
+                     case OutputSchema(e, p) =>
+                             BaseCondition(e, p)
                      case _ => 
                              throw SchemaBuildException("Expected data expression")
               }
               WithBase(v.base,r)
               
 
-  private def processApply(applyTerm: Apply, base: Expr[SchemaBase]): WithBase[Schema] =
+  private def processApply(applyTerm: Apply, base: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] =
     import scala.collection._
     applyTerm match
       case Apply(TypeApply(sel@Select(obj,method),typeArgs), args) =>
          if (method=="foreach" && obj.tpe <:< TypeRepr.of[ParRange]) {
-            processParRange(obj, args.head, base)
+            processParRange(obj, args.head, base, pos)
          } else if (method=="foreach" && obj.tpe <:< TypeRepr.of[ArrayOps[?]]){
-            processFor(obj, args.head, base)
+            processFor(obj, args.head, base, pos)
          } 
          else {
            throw SchemaCompileException(s"type arguments are not supported (term=${applyTerm})", applyTerm.asExpr)
@@ -164,7 +168,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
              state = cState.base
              val expr = '{
                 ${cState.value} match
-                   case OutputSchema(e) => e
+                   case OutputSchema(e, p) => e
                    case _  =>
                       throw SchemaBuildException("Expected data expression")
              }
@@ -174,7 +178,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
          // we assume, that object is a first argument
          val objExpr = '{
            ${objSchema.value} match
-               case OutputSchema(e) => e
+               case OutputSchema(e, p) => e
                case _ =>
                   throw SchemaBuildException("Expected data expression")
          }
@@ -184,7 +188,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
          val signature = buildDataSortSignature(sel, argsSorts, outSort)
          val newBase = '{  ${state}.copy(signatures = ${state}.signatures + ${signature})  }
          val newSchema = '{
-             OutputSchema(FunctionalExpression(${signature},${Expr.ofSeq(argsExprs)}))
+             OutputSchema(FunctionalExpression(${signature},${Expr.ofSeq(argsExprs)}),${pos.lift})
          }
          WithBase[Schema](base=newBase, value = newSchema)
       case Apply(Ident(name),args) =>
@@ -202,16 +206,17 @@ class SchemaEmbedding(using val qctx: Quotes) {
            case d: Definition =>
               d match
                  case ValDef(name,typeTree,optRhs) =>
+                   val pos = SourcePosition.treePos(d)
                    optRhs match
                      case Some(rhs) =>
                         val rhsSchema = processTerm(rhs, base)
                         val rhsExpr = '{
                                ${rhsSchema.value} match
-                                  case OutputSchema(expr) => expr 
+                                  case OutputSchema(expr, p) => expr 
                                   case _ => throw SchemaBuildException("AAA")
                         }
                         // TODO: add lisst of names and track ValDef to Name                  
-                        val r = '{ AssignSchema(${Expr(name)}, ${rhsExpr}) }
+                        val r = '{ AssignSchema(${Expr(name)}, ${rhsExpr}, ${pos.lift}) }
                         WithBase(rhsSchema.base, r)
                      case None =>
                         throw SchemaCompileException(s"Var should have init value ${d}", d.asExpr )
@@ -220,7 +225,7 @@ class SchemaEmbedding(using val qctx: Quotes) {
            case t: Term => processTerm(t, base)
 
 
-  private def processParRange( parRange: Term, foreachArg: Term, base: Expr[SchemaBase]): WithBase[Schema] =
+  private def processParRange( parRange: Term, foreachArg: Term, base: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] =
       foreachArg match
          case Lambda(params, body) =>
             if (params.length > 1) {
@@ -255,16 +260,20 @@ class SchemaEmbedding(using val qctx: Quotes) {
                   ${startSchema.value}.asDataExpression,
                   ${finishSchema.value}.asDataExpression,
                   ${workSizeSchema.value}.asDataExpression,
-                  ${bodySchema.value}
+                  ${bodySchema.value},
+                  ${pos.lift}
                )
             }
             WithBase(bodySchema.base, r)
-         case Inlined(x,List(),body) => processParRange(parRange, body, base)
-         case Block(List(), body) => processParRange(parRange, body, base)
+         case Inlined(x,List(),body) => 
+            // TODO: add to pos body itself ?
+            processParRange(parRange, body, base, pos)
+         case Block(List(), body) => 
+            processParRange(parRange, body, base, pos)
          case _ =>
             throw SchemaCompileException("Lambda in parRange foreach is expected", foreachArg.asExpr)
    
-  private def processFor(forTerm: Term, forArg: Term, base: Expr[SchemaBase]) : WithBase[Schema] =
+  private def processFor(forTerm: Term, forArg: Term, base: Expr[SchemaBase], pos: SourcePosition) : WithBase[Schema] =
       forArg match
          case Lambda(params, body) =>
             if (params.length > 1) {
@@ -291,28 +300,29 @@ class SchemaEmbedding(using val qctx: Quotes) {
                   ${startSchema.value}.asDataExpression,
                   ${finishSchema.value}.asDataExpression,
                   ${workSizeSchema.value}.asDataExpression,
-                  ${bodySchema.value}
+                  ${bodySchema.value},
+                  ${pos.lift}
                )
             }
             WithBase(bodySchema.base, r)
          case _ => throw SchemaCompileException("Lambda in for loop is expected", forArg.asExpr)
 
 
-  private def processIdent(id: Ident, base: Expr[SchemaBase]): WithBase[Schema] =
+  private def processIdent(id: Ident, base: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] =
         val sort = findDataSort(id.tpe.widen, id.asExpr)
-        val newSchema = '{ OutputSchema(DataAccessExpression( ${Expr(id.name)}, ${sort} )) }
+        val newSchema = '{ OutputSchema(DataAccessExpression( ${Expr(id.name)}, ${sort}), ${pos.lift}) }
         WithBase(base, newSchema)
   
-  private def processLiteral(term: Literal, state: Expr[SchemaBase]): WithBase[Schema] = 
+  private def processLiteral(term: Literal, state: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] = 
         val sort = findDataSort(term.tpe.widen, term.asExpr)
         val newBase = '{  ${state}.copy(sorts = ${state}.sorts + ${sort})  }
-        val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.constant.show)})) }
+        val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.constant.show)}), ${pos.lift} ) }
         WithBase(newBase, schema)
 
-   private def processSelect(term: Select, state: Expr[SchemaBase]): WithBase[Schema] = 
+   private def processSelect(term: Select, state: Expr[SchemaBase], pos: SourcePosition): WithBase[Schema] = 
         val sort = findDataSort(term.tpe.widen, term.asExpr)
         val newBase = '{  ${state}.copy(sorts = ${state}.sorts + ${sort})  }
-        val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.name)})) }
+        val schema = '{ OutputSchema(ConstantExpression(${sort},${Expr(term.name)}), ${pos.lift}) }
         WithBase(newBase, schema)
 
   //  TODO: check that appropriative operations on DataRep exists ?

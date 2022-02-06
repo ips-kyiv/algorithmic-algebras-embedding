@@ -16,7 +16,7 @@ import munit.*
 
 class MinimalSchemaCompileTest extends FunSuite:
 
-  test("parse and compile minimal schema") {
+  test("parse compile and run minimal schema") {
 
     val schema = Schema.build{
       (x:Int) => x+1

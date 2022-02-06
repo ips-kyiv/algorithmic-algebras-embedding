@@ -28,14 +28,15 @@ sealed trait Schema:
 
   def fulfillSignature(packageName: Seq[String], name: String, in: Seq[(String,DataSort)], out:Option[DataSort]): (Seq[(String,DataSort)],Option[DataSort])
 
+  def pos: SourcePosition
 
 
 // ? - List instead pair 
-case class SequentialSchema(x: Schema, y: Schema) extends Schema:
+case class SequentialSchema(x: Schema, y: Schema, override val pos: SourcePosition) extends Schema:
 
   override def asDataExpression: DataExpression = y.asDataExpression
 
-  def lift(using Quotes): Expr[Schema] = '{SequentialSchema(${x.lift}, ${y.lift})}
+  def lift(using Quotes): Expr[Schema] = '{SequentialSchema(${x.lift}, ${y.lift}, ${pos.lift})}
 
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
     val (inx, outx) = x.fulfillSignature(packageName, name, in, out)
@@ -44,9 +45,9 @@ case class SequentialSchema(x: Schema, y: Schema) extends Schema:
 
     
 
-case class ParallelSchema(x: Schema, y: Schema) extends Schema:
+case class ParallelSchema(x: Schema, y: Schema, override val pos: SourcePosition) extends Schema:
 
-  def lift(using Quotes): Expr[Schema] = '{ParallelSchema(${x.lift}, ${y.lift})}
+  def lift(using Quotes): Expr[Schema] = '{ParallelSchema(${x.lift}, ${y.lift}, ${pos.lift})}
 
 
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
@@ -62,9 +63,9 @@ case class ParallelSchema(x: Schema, y: Schema) extends Schema:
     (in ++ inx, out.flatMap(_ => outx))
 
 
-case class ConditionalSchema(cond: Condition, ifTrue: Schema, ifFalse: Schema) extends Schema:
+case class ConditionalSchema(cond: Condition, ifTrue: Schema, ifFalse: Schema, override val pos: SourcePosition) extends Schema:
 
-  def lift(using Quotes): Expr[Schema] = '{ConditionalSchema(${cond.lift}, ${ifTrue.lift}, ${ifFalse.lift})}
+  def lift(using Quotes): Expr[Schema] = '{ConditionalSchema(${cond.lift}, ${ifTrue.lift}, ${ifFalse.lift}, ${pos.lift})}
 
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
     val (inx, outx) = ifTrue.fulfillSignature(packageName, name, Seq.empty, None)
@@ -80,9 +81,9 @@ case class ConditionalSchema(cond: Condition, ifTrue: Schema, ifFalse: Schema) e
 
 
 
-case class LoopSchema(cond: Condition, body: Schema) extends Schema:
+case class LoopSchema(cond: Condition, body: Schema, override val pos: SourcePosition) extends Schema:
 
-  def lift(using Quotes): Expr[Schema] = '{LoopSchema(${cond.lift}, ${body.lift})}
+  def lift(using Quotes): Expr[Schema] = '{LoopSchema(${cond.lift}, ${body.lift}, ${pos.lift})}
 
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
       body.fulfillSignature(packageName, name, in, out)
@@ -92,25 +93,26 @@ case class ParallelIterationSchema(varName: Name,
                                       start: DataExpression, 
                                       end: DataExpression,
                                       workSize: DataExpression,
-                                      body: Schema) extends Schema:
+                                      body: Schema,
+                                      override val pos: SourcePosition) extends Schema:
 
   def lift(using Quotes): Expr[Schema] = '{ 
-    ParallelIterationSchema( ${Expr(varName)}, ${start.lift}, ${end.lift}, ${workSize.lift}, ${body.lift} ) 
+    ParallelIterationSchema( ${Expr(varName)}, ${start.lift}, ${end.lift}, ${workSize.lift}, ${body.lift}, ${pos.lift} ) 
   }
   
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
     body.fulfillSignature(packageName, name, in, out)
 
 
-case class AssertSchema(cond: Condition) extends Schema:
-  def lift(using Quotes): Expr[Schema] = '{AssertSchema(${cond.lift})}
+case class AssertSchema(cond: Condition, override val pos: SourcePosition) extends Schema:
+  def lift(using Quotes): Expr[Schema] = '{AssertSchema(${cond.lift}, ${pos.lift})}
 
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
     (in, out)
 
-case class InputSchema(parameters: Seq[InputSchema.Entry]) extends Schema:
+case class InputSchema(parameters: Seq[InputSchema.Entry], override val pos: SourcePosition) extends Schema:
   
-  def lift(using Quotes): Expr[Schema] = '{ InputSchema(${Expr.ofSeq(parameters.map(_.lift))}) }
+  def lift(using Quotes): Expr[Schema] = '{ InputSchema(${Expr.ofSeq(parameters.map(_.lift))}, ${pos.lift}) }
 
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
     (in.appendedAll(parameters.map(x => (x.variable,x.sort))), out)
@@ -124,15 +126,15 @@ object InputSchema{
 
 }
 
-case class AssignSchema(variable: Name, expr: DataExpression) extends Schema:
-  def lift(using Quotes): Expr[Schema] = '{AssignSchema(${Expr(variable)}, ${expr.lift} )}
+case class AssignSchema(variable: Name, expr: DataExpression, override val pos: SourcePosition) extends Schema:
+  def lift(using Quotes): Expr[Schema] = '{AssignSchema(${Expr(variable)}, ${expr.lift}, ${pos.lift} )}
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
         (in, out)
 
 
-case class OutputSchema(expr: DataExpression) extends Schema:
+case class OutputSchema(expr: DataExpression, override val pos: SourcePosition) extends Schema:
   override def asDataExpression: DataExpression = expr
-  def lift(using Quotes): Expr[Schema] = '{OutputSchema(${expr.lift})}
+  def lift(using Quotes): Expr[Schema] = '{OutputSchema(${expr.lift}, ${pos.lift})}
   def fulfillSignature(packageName: Seq[String], name:String, in: Seq[(String,DataSort)], out:Option[DataSort] ): (Seq[(String,DataSort)],Option[DataSort]) =
     out match
       case None => (in, Some(expr.sort))

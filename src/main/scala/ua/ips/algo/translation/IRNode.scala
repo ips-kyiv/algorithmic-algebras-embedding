@@ -22,13 +22,13 @@ object IRNode:
 
     def accept(ctx: IRContext, schema: Schema, rootPath: String): IRNode =
       val node = schema match
-        case s@SequentialSchema(x, y) =>
+        case s@SequentialSchema(x, y, pos) =>
           SeqIRNode.create(ctx, s, rootPath)
-        case p@ParallelSchema(x,y) =>
+        case p@ParallelSchema(x,y, pos) =>
           ParIRNode.create(ctx,p, rootPath)
-        case in@InputSchema(parameters) =>
+        case in@InputSchema(parameters, pos) =>
           IRInputs.create(ctx,in,rootPath)
-        case out@OutputSchema(expr) =>
+        case out@OutputSchema(expr, pos) =>
           IROutput.create(ctx,out,rootPath)
       ctx.addNode(rootPath, node)
       node    
@@ -86,7 +86,7 @@ object SeqIRNode:
 
     def append(ctx: IRContext, prev: AcceptRest, schema: Schema): AcceptRest =
       schema match
-        case SequentialSchema(x,y) =>
+        case SequentialSchema(x,y, pos) =>
            append(ctx,append(ctx,prev, x), y)
         case other => 
            val inner = IRNode.accept(ctx, schema, s"${prev.rootPath}.${prev.seqIndex}")
@@ -129,7 +129,7 @@ object ParIRNode:
 
   def append(ctx: IRContext, prev: AcceptRest, schema: Schema): AcceptRest =
     schema match
-      case ParallelSchema(x,y) =>
+      case ParallelSchema(x,y, pos) =>
           append(ctx, append(ctx, prev, x), y)
       case other => 
            val inner = IRNode.accept(ctx, schema, s"${prev.rootPath}.${prev.flowIndex}")

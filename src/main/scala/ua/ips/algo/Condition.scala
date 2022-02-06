@@ -18,8 +18,8 @@ sealed trait Condition:
   def lift(using Quotes): Expr[Condition]
 
 
-case class BaseCondition(expr: DataExpression) extends Condition:
-  def lift(using Quotes): Expr[Condition] = '{ BaseCondition(${expr.lift}) }
+case class BaseCondition(expr: DataExpression, pos: SourcePosition) extends Condition:
+  def lift(using Quotes): Expr[Condition] = '{ BaseCondition(${expr.lift}, ${pos.lift}) }
 
 case class AndCondition(x:Condition, y:Condition) extends Condition:
   def lift(using Quotes): Expr[Condition] = '{AndCondition(${x.lift}, ${y.lift}) }
