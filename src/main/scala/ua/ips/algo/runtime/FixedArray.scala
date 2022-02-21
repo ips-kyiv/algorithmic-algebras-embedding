@@ -8,6 +8,10 @@ trait FixedArray[E,N <: Int]:
   def  apply(i:Int):E
   
   def  update(i:Int, e:E):Unit
+  
 
+//trait FixedMatrix[E, N <: Int, M <: Int]:
+
+  
 
 

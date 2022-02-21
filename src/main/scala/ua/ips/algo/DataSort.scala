@@ -238,6 +238,12 @@ given tensorArrayBufferDataSortRep[E](using e:DataSortRep[E]): DataSortRep[Array
    val  javaClass: Class[ArrayBuffer[E]] = classOf[ArrayBuffer[E]]
 
 
+given tensorTensorDataSortRep[E](using e: DataSortRep[E]): DataSortRep[Tensor[E]] with RefDataSortRep[Tensor[E]] with
+   val dataSort: DataSort = TensorDataSort(e.dataSort, TensorDataSortFlawor.Dence)
+   val  javaClass: Class[Tensor[E]] = classOf[Tensor[E]]
+
+   
+
 object NamedSetRep:
 
    import java.util.concurrent.ConcurrentHashMap
