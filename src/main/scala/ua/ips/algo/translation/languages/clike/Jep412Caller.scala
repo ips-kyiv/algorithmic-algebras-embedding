@@ -4,27 +4,26 @@ package ua.ips.algo.translation.languages.clike
 
 // TODO: set jdk-option to enable 
 import jdk.incubator.foreign.*
-import jdk.incubator.foreign.CLinker.VaList.Builder
+import jdk.incubator.foreign.VaList.Builder
 import java.lang.invoke.*
 
 import ua.ips.algo.*
 import ua.ips.algo.translation.*
 
 
-class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress: MemoryAddress, variant: Seq[String]) extends LoadedInterpretation {
+class Jep412Interpretation(mainSignature: DataSortSignature, mainFunction: NativeSymbol, variant: Seq[String]) extends LoadedInterpretation {
 
    type DataItem = MemoryAddress | Boolean | Int |  Long | Float | Double
 
    type DataScope = ResourceScope
 
-   class Jep412Caller(override val signature: TypesOnlyDataSortSignature, funAddress: MemoryAddress) extends LoadedFunctionCaller {
+   class Jep412Caller(override val signature: TypesOnlyDataSortSignature, funSymbol: NativeSymbol ) extends LoadedFunctionCaller {
       
       val argsReprs: Seq[DataSortRep[?]] = signature.in.map(DataSort.findRep)
       val outRepr = DataSort.findRep(signature.out)
  
-      val methodHandle: MethodHandle = CLinker.getInstance().downcallHandle(
-         funAddress,
-         createMethodType(),
+      val methodHandle: MethodHandle = CLinker.systemCLinker().downcallHandle(
+         funSymbol,
          FunctionDescriptor.of(
             getMemoryLayout(signature.out),
             signature.in.map(x => getMemoryLayout(x)): _*
@@ -48,7 +47,7 @@ class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress
    
    }
 
-   val mainCaller = new Jep412Caller(mainSignature.typesOnly, mainFunctionAddress) 
+   val mainCaller = new Jep412Caller(mainSignature.typesOnly, mainFunction) 
 
    def newDataScope(): ResourceScope = ResourceScope.newConfinedScope()
 
@@ -68,7 +67,7 @@ class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress
                   item match
                      case x: Long => Some(x.asInstanceOf[T])
                      case _ => throw new InterpretationException("long was expexted");                     
-               case FloatBasicRep.name => CLinker.C_FLOAT
+               case FloatBasicRep.name =>
                   item match
                      case x: Float => Some(x.asInstanceOf[T])
                      case _ => throw new InterpretationException("float was expexted");
@@ -112,7 +111,7 @@ class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress
                   value match
                      case x: java.lang.Long => x.longValue
                      case _ => throw new InterpretationException(s"java.lang.Long was expected, we have $value");                     
-               case FloatBasicRep.name => CLinker.C_FLOAT
+               case FloatBasicRep.name => 
                   value match
                      case x: java.lang.Float => x.floatValue
                      case _ => throw new InterpretationException(s"java.lang.Float was expected, we have $value");
@@ -146,18 +145,18 @@ class Jep412Interpretation(mainSignature: DataSortSignature, mainFunctionAddress
       sort match
          case BasicDataSort(name) =>
             name match
-               case BooleanBasicRep.name => CLinker.C_INT
-               case IntBasicRep.name => CLinker.C_INT
-               case LongBasicRep.name => CLinker.C_LONG
-               case FloatBasicRep.name => CLinker.C_FLOAT
-               case DoubleBasicRep.name => CLinker.C_DOUBLE
+               case BooleanBasicRep.name => ValueLayout.JAVA_BOOLEAN
+               case IntBasicRep.name => ValueLayout.JAVA_INT
+               case LongBasicRep.name => ValueLayout.JAVA_LONG
+               case FloatBasicRep.name => ValueLayout.JAVA_FLOAT
+               case DoubleBasicRep.name => ValueLayout.JAVA_DOUBLE
                case UnitBasicRep.name => 
                   throw InterpretationException("Can't get memory layput for unit");
                case _ =>
                   throw InterpretationException(s"Unknown primitive type for dataSort: $name");
-         case TupleDataSort(elements)=> CLinker.C_POINTER
-         case NamedSet(_) => CLinker.C_POINTER
-         case TensorDataSort(_,_) => CLinker.C_POINTER  
+         case TupleDataSort(elements)=> ValueLayout.ADDRESS
+         case NamedSet(_) => ValueLayout.ADDRESS
+         case TensorDataSort(_,_) => ValueLayout.ADDRESS  
    }
 
   

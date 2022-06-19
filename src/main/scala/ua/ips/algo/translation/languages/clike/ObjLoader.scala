@@ -71,7 +71,7 @@ trait ObjLoader extends Loader {
       val fullPath = java.nio.file.Paths.get(s"${path}/${moduleName}")
       System.load(fullPath.toAbsolutePath.toString);
       //
-      val cLinker = CLinker.getInstance()
+      val cLinker = CLinker.systemCLinker()
       val functionName = NamesMangling.objFunctionName(signature,variant)
       val optMainFun = SymbolLookup.loaderLookup().lookup(functionName)
       if (optMainFun.isEmpty) {
