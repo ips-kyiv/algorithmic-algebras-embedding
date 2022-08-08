@@ -40,9 +40,10 @@ trait ScalaGen {
 
   def genMainDeclaration(ctx: ScalaGenContext, name: String): AstDef = {
       import qctx.reflect.*
+      //val inputs = ctx.generateInputs()
       //val inputs = ctx.generateInputs(ctx.irCtx.rootNode);
       val expr = '{
-        new Fun1SchemaRepresentation1[Int,Int](${Expr(name)}, x => x+1, '{x => x+1})
+        new Fun1SchemaRepresentation[Int,Int](${Expr(name)}, x => x+1, '{x => x+1})
       }
       expr.asTerm
   }

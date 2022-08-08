@@ -6,4 +6,7 @@ import ua.ips.algo.translation.*
 class ScalaGenContext(ctx: IRContext) {
 
 
+ // def generateLambda():
+
+
 }

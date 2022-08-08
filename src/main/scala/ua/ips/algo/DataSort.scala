@@ -26,8 +26,9 @@ case class NamedSet(elements: Map[String,DataSort]) extends DataSort:
 enum TensorDataSortFlawor:
       case Dence, Diagonal, AllSame   
 
-//TODO: submit feature request to dotty      
-given ToExpr[TensorDataSortFlawor] with
+object TensorDataSortFlawor:
+   //TODO: submit feature request to dotty      
+   given ToExpr[TensorDataSortFlawor] with
       def apply(x: TensorDataSortFlawor)(using Quotes): Expr[TensorDataSortFlawor] =
          x match
             case TensorDataSortFlawor.Dence => '{ TensorDataSortFlawor.Dence }
@@ -182,41 +183,82 @@ trait RefDataSortRep[T <: AnyRef]:
    def javaClass: Class[T]  
    def javaRefClass: Class[T] = javaClass
 
-sealed trait TupleDataSortRep[T <: Tuple] extends DataSortRep[T] with RefDataSortRep[T]:
+sealed trait TupleDataSortRep[T <: Tuple] extends DataSortRep[T]:
    def length: Int
+   def items: List[DataSortRep[?]]
 
 object TupleDataSortRep:
 
-   def find(elements: Seq[DataSort]): DataSortRep[?] =
+   def find(elements: Seq[DataSort]): TupleDataSortRep[?] =
       elements.length match
-         case 0 => UnitBasicRep
-         case 1 => DataSort.findRep(elements(0))
+         case 0 => EmptyTupleRep
+         case 1 => Tuple1Rep(DataSort.findRep(elements(0)))
          case 2 => 
             Cartesian2Rep( DataSort.findRep(elements(0)), DataSort.findRep(elements(1)) )
          case 3 => Cartesian3Rep( DataSort.findRep(elements(0)), DataSort.findRep(elements(1)), DataSort.findRep(elements(2)) )
          case _ =>
-            throw new IllegalArgumentException(s"tuple size ${elements} is not supported")
+            val h = DataSort.findRep(elements.head)
+            val tl = find(elements.tail)
+            ConsTupleRep(h,tl)
   
 
+case class Tuple1Rep[A](a: DataSortRep[A]) extends TupleDataSortRep[Tuple1[A]] with RefDataSortRep[Tuple1[A]]:
+   def length = 1
+   val dataSort: DataSort = TupleDataSort(IndexedSeq(a.dataSort))
+   val javaClass = classOf[Tuple1[A]]
+   override def items = List(a)
 
-
-case class Cartesian2Rep[A,B](a: DataSortRep[A], b: DataSortRep[B]) extends TupleDataSortRep[(A,B)]:
+case class Cartesian2Rep[A,B](a: DataSortRep[A], b: DataSortRep[B]) extends TupleDataSortRep[(A,B)] with RefDataSortRep[(A,B)]:
    def length = 2
    val dataSort: DataSort = TupleDataSort(IndexedSeq(a.dataSort, b.dataSort))
    val javaClass: Class[Tuple2[A,B]] = classOf[Tuple2[A,B]] 
+   override def items = List(a,b)
 
 
 given cartesian2Rep[A,B](using a: DataSortRep[A], b: DataSortRep[B]): TupleDataSortRep[(A,B)] =
    Cartesian2Rep(a,b)
 
 
-case class Cartesian3Rep[A,B,C](a: DataSortRep[A], b: DataSortRep[B], c:DataSortRep[C]) extends TupleDataSortRep[(A,B,C)]:
+case class Cartesian3Rep[A,B,C](a: DataSortRep[A], b: DataSortRep[B], c:DataSortRep[C]) extends TupleDataSortRep[(A,B,C)] with RefDataSortRep[(A,B,C)]:
    def length = 3
    val dataSort: DataSort = TupleDataSort(IndexedSeq(a.dataSort, b.dataSort, c.dataSort))
    val javaClass: Class[Tuple3[A,B,C]] = classOf[Tuple3[A,B,C]]
+   override def items = List(a,b,c)
 
-given cartesian3Rep[A,B, C](using a: DataSortRep[A], b: DataSortRep[B], c:DataSortRep[C]): TupleDataSortRep[(A,B,C)] =
-   Cartesian3Rep(a,b,c)
+object Cartesian3Rep:
+   
+   given cartesian3Rep[A,B, C](using a: DataSortRep[A], b: DataSortRep[B], c:DataSortRep[C]): TupleDataSortRep[(A,B,C)] =
+      Cartesian3Rep(a,b,c)
+
+
+sealed trait TupleNRep[T<:Tuple] extends TupleDataSortRep[T] {
+
+   def items: List[DataSortRep[?]]
+
+}
+
+object TupleNRep {
+
+   given TupleNRep[EmptyTuple] = EmptyTupleRep
+
+   given [H, TL<:Tuple](using hRep:DataSortRep[H], tlRep:TupleNRep[TL]):TupleNRep[H *: TL] =
+      ConsTupleRep[H,TL](hRep, tlRep)
+
+}
+
+case object EmptyTupleRep extends TupleNRep[EmptyTuple]:
+   override def length = 0
+   override def items = Nil
+   override def dataSort: DataSort = TupleDataSort(IndexedSeq.empty)
+   override def javaClass = classOf[Unit]
+   override def javaRefClass = classOf[Void]
+
+case class ConsTupleRep[H, TL<:Tuple](hRep: DataSortRep[H], tlRep:TupleDataSortRep[TL]) extends TupleNRep[H *: TL]:
+   override def length = tlRep.length + 1
+   override def items = hRep::(tlRep.items) 
+   override def dataSort: DataSort = TupleDataSort(items.map(_.dataSort).toIndexedSeq)
+   override def javaClass = classOf[Tuple]
+   override def javaRefClass = classOf[Tuple]   
 
 
 object TensorDataSortRep:

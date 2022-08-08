@@ -2,6 +2,7 @@ package ua.ips.algo.util
 
 import scala.collection.mutable.{HashMap => MutableHashMap}
 
+
 class Graph[NodeId, NodeData, EdgeData]  {
 
     def get(from: NodeId, to: NodeId): Option[EdgeData] =

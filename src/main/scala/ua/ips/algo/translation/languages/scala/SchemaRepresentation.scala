@@ -18,7 +18,7 @@ abstract class SchemaRepresentation {
 }
 
 
-class Fun1SchemaRepresentation1[A:DataSortRep,B:DataSortRep](val name: String, fun: A=>B, exprFun: Quotes ?=> Expr[A=>B]) extends SchemaRepresentation {
+class Fun1SchemaRepresentation[A:DataSortRep,B:DataSortRep](val name: String, fun: A=>B, exprFun: Quotes ?=> Expr[A=>B]) extends SchemaRepresentation {
 
   
   def apply(using interpreter: ScalaInterpreter)(scope: interpreter.DataScope, args: Seq[interpreter.DataItem]): interpreter.DataItem = {
@@ -35,7 +35,7 @@ class Fun1SchemaRepresentation1[A:DataSortRep,B:DataSortRep](val name: String, f
 
 }
 
-class Fun2SchemaRepresentation1[A1:DataSortRep, A2:DataSortRep, B:DataSortRep](val name: String, fun: (A1,A2)=>B, 
+class Fun2SchemaRepresentation[A1:DataSortRep, A2:DataSortRep, B:DataSortRep](val name: String, fun: (A1,A2)=>B, 
                                 exprFun: Quotes ?=> Expr[(A1,A2)=>B]) extends SchemaRepresentation {
 
   
@@ -56,7 +56,7 @@ class Fun2SchemaRepresentation1[A1:DataSortRep, A2:DataSortRep, B:DataSortRep](v
 }
 
 
-class Fun3SchemaRepresentation1[A1:DataSortRep, A2:DataSortRep, A3: DataSortRep, B:DataSortRep](
+class Fun3SchemaRepresentation[A1:DataSortRep, A2:DataSortRep, A3: DataSortRep, B:DataSortRep](
                 val name: String, 
                 fun: (A1,A2,A3)=>B, 
                 exprFun: Quotes ?=> Expr[(A1,A2,A3)=>B]) extends SchemaRepresentation {
@@ -79,3 +79,20 @@ class Fun3SchemaRepresentation1[A1:DataSortRep, A2:DataSortRep, A3: DataSortRep,
   }
 
 }
+
+
+class FunNSchemaRepresentation[T <: Tuple: DataSortRep, B:DataSortRep](val name:String, 
+          arity: Int,
+          fun: Tuple => B,
+          exprFun: Expr[Tuple => B]
+          ) {
+
+
+  def apply(using interpreter: ScalaInterpreter)(scope: interpreter.DataScope, args: Seq[interpreter.DataItem]): interpreter.DataItem = {
+    val nArgs = args.length;
+    ???      
+  }    
+
+}
+    
+

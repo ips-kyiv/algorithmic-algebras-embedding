@@ -42,4 +42,6 @@ object SourcePosition {
      quotePos(Position.ofMacroExpansion).lift
    }
 
+   val Unknown = SourcePosition("unknow",0,0,0)
+
 }
